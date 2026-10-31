@@ -67,3 +67,34 @@ func TestProviderFailuresAreSafe(t *testing.T) {
 		})
 	}
 }
+
+func TestAssistantOptionsKeepOCRDefaults(t *testing.T) {
+	for _, assistant := range []bool{false, true} {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var payload struct {
+				Max      int `json:"max_completion_tokens"`
+				Messages []struct {
+					Role string `json:"role"`
+				} `json:"messages"`
+			}
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
+			if assistant {
+				assert.Equal(t, 1500, payload.Max)
+				require.Len(t, payload.Messages, 2)
+				assert.Equal(t, "developer", payload.Messages[0].Role)
+			} else {
+				assert.Equal(t, 8192, payload.Max)
+				assert.Len(t, payload.Messages, 1)
+			}
+			_, _ = w.Write([]byte(`{"choices":[{"finish_reason":"stop","message":{"content":"{}"}}]}`))
+		}))
+		cfg := config.ProcessingConfig{Provider: "openai-compatible", BaseURL: server.URL, APIKey: "test", Model: "test", Timeout: time.Second}
+		options := []ai.Option{}
+		if assistant {
+			options = append(options, ai.WithMaxOutputTokens(1500), ai.WithInstructions("Return JSON only"))
+		}
+		_, err := ai.NewClient(cfg, options...).Complete(context.Background(), "untrusted data", nil)
+		require.NoError(t, err)
+		server.Close()
+	}
+}

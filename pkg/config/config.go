@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,34 @@ type Config struct {
 	Auth       AuthConfig       `mapstructure:"auth"`
 	Uploads    UploadsConfig    `mapstructure:"uploads"`
 	Processing ProcessingConfig `mapstructure:"processing"`
+	Assistant  AssistantConfig  `mapstructure:"assistant"`
+}
+
+type AssistantConfig struct {
+	Enabled               bool          `mapstructure:"enabled"`
+	BaseURL               string        `mapstructure:"base_url"`
+	APIKey                string        `mapstructure:"api_key" json:"-"`
+	Model                 string        `mapstructure:"model"`
+	Timeout               time.Duration `mapstructure:"timeout"`
+	MaxOutputTokens       int           `mapstructure:"max_output_tokens"`
+	RequestLimit          int           `mapstructure:"request_limit"`
+	RateWindow            time.Duration `mapstructure:"rate_window"`
+	MaxConcurrentRequests int           `mapstructure:"max_concurrent_requests"`
+}
+
+func (c AssistantConfig) Validate() error {
+	// Zero values are supported for programmatically constructed apps with AI off.
+	if !c.Enabled {
+		return nil
+	}
+	u, err := url.Parse(c.BaseURL)
+	if err != nil || u.Scheme != "https" || u.Host != "api.openai.com" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || (u.Path != "" && u.Path != "/" && u.Path != "/v1" && u.Path != "/v1/") {
+		return fmt.Errorf("%w: assistant.base_url must use the OpenAI HTTPS endpoint", ErrInvalidConfiguration)
+	}
+	if strings.TrimSpace(c.APIKey) == "" || strings.TrimSpace(c.Model) == "" || c.Timeout < time.Second || c.Timeout > 60*time.Second || c.MaxOutputTokens < 256 || c.MaxOutputTokens > 4096 || c.RequestLimit < 1 || c.RequestLimit > 100 || c.RateWindow < time.Second || c.RateWindow > time.Hour || c.MaxConcurrentRequests < 1 || c.MaxConcurrentRequests > 20 {
+		return fmt.Errorf("%w: assistant credentials or limits are invalid", ErrInvalidConfiguration)
+	}
+	return nil
 }
 
 type HTTPServerConfig struct {
@@ -140,6 +169,12 @@ func (c Config) Validate() error {
 	}
 	if c.Processing.Provider != "anthropic" && c.Processing.Provider != "openai-compatible" {
 		return invalid("processing.provider is unsupported")
+	}
+	if err := c.Assistant.Validate(); err != nil {
+		return err
+	}
+	if c.Assistant.Enabled && c.HTTPServer.WriteTimeout <= c.Assistant.Timeout {
+		return invalid("http_server.write_timeout must exceed assistant.timeout")
 	}
 	return nil
 }

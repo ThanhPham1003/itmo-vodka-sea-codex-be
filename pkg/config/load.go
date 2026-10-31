@@ -36,6 +36,8 @@ func LoadConfig(path string) (*Config, error) {
 		"uploads.directory":     "./storage/uploads", "uploads.max_file_size_mb": 20, "uploads.max_files_per_request": 10, "uploads.max_pdf_pages": 100,
 		"processing.enabled": false, "processing.provider": "openai-compatible", "processing.base_url": "https://api.openai.com", "processing.api_key": "", "processing.model": "",
 		"processing.poll_interval": 2 * time.Second, "processing.max_concurrent_files": 3, "processing.timeout": 90 * time.Second, "processing.lease_duration": 5 * time.Minute, "processing.max_page_dimension": 1600,
+		"assistant.enabled": false, "assistant.base_url": "https://api.openai.com", "assistant.api_key": "", "assistant.model": "",
+		"assistant.timeout": 30 * time.Second, "assistant.max_output_tokens": 1500, "assistant.request_limit": 10, "assistant.rate_window": time.Minute, "assistant.max_concurrent_requests": 4,
 	}
 	for key, value := range defaults {
 		v.SetDefault(key, value)

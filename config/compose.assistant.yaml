@@ -1,0 +1,14 @@
+# Overlay for the existing VM Compose file whose backend service is named api.
+# docker compose -f docker-compose.yml -f config/compose.assistant.yaml up -d api
+services:
+  api:
+    environment:
+      ASSISTANT_ENABLED: ${ASSISTANT_ENABLED:-false}
+      ASSISTANT_BASE_URL: ${ASSISTANT_BASE_URL:-https://api.openai.com}
+      ASSISTANT_API_KEY: ${ASSISTANT_API_KEY:-}
+      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-}
+      ASSISTANT_TIMEOUT: ${ASSISTANT_TIMEOUT:-30s}
+      ASSISTANT_MAX_OUTPUT_TOKENS: ${ASSISTANT_MAX_OUTPUT_TOKENS:-1500}
+      ASSISTANT_REQUEST_LIMIT: ${ASSISTANT_REQUEST_LIMIT:-10}
+      ASSISTANT_RATE_WINDOW: ${ASSISTANT_RATE_WINDOW:-1m}
+      ASSISTANT_MAX_CONCURRENT_REQUESTS: ${ASSISTANT_MAX_CONCURRENT_REQUESTS:-4}
