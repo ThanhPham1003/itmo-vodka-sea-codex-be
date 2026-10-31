@@ -32,29 +32,33 @@ func (r *AuditRepository) List(ctx context.Context, company uuid.UUID, f dto.Fil
 	if company == uuid.Nil {
 		return out, common.ErrForbidden
 	}
-	q := r.db.WithContext(ctx).Model(&models.AuditLog{}).Where("company_id = ?", company)
+	q := r.db.WithContext(ctx).Model(&models.AuditLog{}).Where("audit_logs.company_id = ?", company)
 	if f.Action != "" {
-		q = q.Where("action = ?", f.Action)
+		q = q.Where("audit_logs.action = ?", f.Action)
 	}
 	if f.DossierID != nil {
-		q = q.Where("dossier_id = ?", *f.DossierID)
+		q = q.Where("audit_logs.dossier_id = ?", *f.DossierID)
 	}
 	if f.ResourceID != nil {
-		q = q.Where("resource_id = ?", *f.ResourceID)
+		q = q.Where("audit_logs.resource_id = ?", *f.ResourceID)
 	}
 	if f.ActorID != nil {
-		q = q.Where("actor_id = ?", *f.ActorID)
+		q = q.Where("audit_logs.actor_id = ?", *f.ActorID)
 	}
 	if f.From != nil {
-		q = q.Where("created_at >= ?", *f.From)
+		q = q.Where("audit_logs.created_at >= ?", *f.From)
 	}
 	if f.To != nil {
-		q = q.Where("created_at < ?", *f.To)
+		q = q.Where("audit_logs.created_at < ?", *f.To)
 	}
 	if err := q.Count(&out.Total).Error; err != nil {
 		return out, fmt.Errorf("count audit: %w", err)
 	}
-	if err := q.Order("created_at DESC, id DESC").Limit(f.Limit).Offset(f.Offset).Find(&out.Items).Error; err != nil {
+	// Include inactive/soft-deleted members for historical attribution. The company
+	// predicate prevents a corrupt/stale actor reference exposing another tenant's name.
+	if err := q.Select("audit_logs.*, COALESCE(NULLIF(TRIM(audit_actor.full_name), ''), audit_actor.username, '') AS actor_name").
+		Joins("LEFT JOIN users AS audit_actor ON audit_actor.id = audit_logs.actor_id AND audit_actor.company_id = audit_logs.company_id").
+		Order("audit_logs.created_at DESC, audit_logs.id DESC").Limit(f.Limit).Offset(f.Offset).Find(&out.Items).Error; err != nil {
 		return out, fmt.Errorf("list audit: %w", err)
 	}
 	return out, nil

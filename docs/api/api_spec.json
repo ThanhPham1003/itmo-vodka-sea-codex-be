@@ -220,6 +220,10 @@
             "format": "uuid",
             "type": "string"
           },
+          "actor_name": {
+            "readOnly": true,
+            "type": "string"
+          },
           "company_id": {
             "format": "uuid",
             "type": "string"
@@ -2277,7 +2281,7 @@
     },
     "/api/v1/audit-logs": {
       "get": {
-        "description": "Append-only API; no update/delete endpoints. System actor_id is the zero UUID. Original values and private decision snapshots are excluded.",
+        "description": "Append-only API; no update/delete endpoints. actor_name is the current full name (username fallback), resolved only within the event company, including inactive/soft-deleted members. Empty for unknown actors or system actor_id (zero UUID). actor_id remains the stable filter/reference. Original values and private decision snapshots are excluded.",
         "operationId": "auditLogs",
         "parameters": [
           {
