@@ -264,8 +264,17 @@ func compatibleRule(rule models.ComparisonRule, docs map[string]models.DocumentD
 	return false
 }
 func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.DossierRepository, d *models.DossierDefinition, previous *models.DossierDefinition) ([]models.PinnedDocument, error) {
-	if strings.TrimSpace(d.Name) == "" || len(d.Name) > 600 || len(d.Description) > 8000 || len(d.Documents) == 0 || len(d.Documents) > 50 || len(d.Rules) > 200 {
-		return nil, common.ErrInvalidArgument
+	if strings.TrimSpace(d.Name) == "" || len(d.Name) > 600 {
+		return nil, invalidCatalogDefinition("invalid_name", "name", -1)
+	}
+	if len(d.Description) > 8000 {
+		return nil, invalidCatalogDefinition("description_too_long", "description", -1)
+	}
+	if len(d.Documents) == 0 || len(d.Documents) > 50 {
+		return nil, invalidCatalogDefinition("invalid_document_count", "documents", -1)
+	}
+	if len(d.Rules) > 200 {
+		return nil, invalidCatalogDefinition("too_many_rules", "rules", -1)
 	}
 	oldReq := map[string]bool{}
 	oldRule := map[string]bool{}
@@ -285,7 +294,7 @@ func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.Doss
 	for i := range d.Documents {
 		req := &d.Documents[i]
 		if req.Position < 0 || req.Position > 1000 {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("invalid_position", "documents.position", i)
 		}
 		if req.Position == 0 && i > 0 {
 			req.Position = i
@@ -293,36 +302,42 @@ func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.Doss
 		if req.Key == "" {
 			req.Key = code("requirement")
 		} else if !oldReq[req.Key] {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("unknown_identifier", "documents.key", i)
 		}
 		if keys[req.Key] {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("duplicate_identifier", "documents.key", i)
 		}
 		keys[req.Key] = true
 		pair := req.DocumentType + "\x00" + req.Role
 		if requirementPairs[pair] {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("duplicate_document_role", "documents.role", i)
 		}
 		requirementPairs[pair] = true
 		if req.MinCount == 0 {
 			req.MinCount = 1
 		}
-		if req.MinCount < 1 || req.MinCount > 100 || len(req.Role) > 80 || req.Conditional && strings.TrimSpace(req.TriggerReason) == "" {
-			return nil, common.ErrInvalidArgument
+		if req.MinCount < 1 || req.MinCount > 100 {
+			return nil, invalidCatalogDefinition("invalid_min_count", "documents.min_count", i)
+		}
+		if len(req.Role) > 80 {
+			return nil, invalidCatalogDefinition("role_too_long", "documents.role", i)
+		}
+		if req.Conditional && strings.TrimSpace(req.TriggerReason) == "" {
+			return nil, invalidCatalogDefinition("missing_trigger_reason", "documents.trigger_reason", i)
 		}
 		doc, err := r.DocumentType(ctx, req.DocumentType, false)
 		if err != nil || !doc.Active {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("document_type_unavailable", "documents.document_type", i)
 		}
 		if req.SchemaVersion == 0 {
 			req.SchemaVersion = doc.CurrentVersion
 		}
 		v, err := r.DocumentVersion(ctx, doc.ID, req.SchemaVersion)
 		if err != nil {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("schema_version_unavailable", "documents.schema_version", i)
 		}
 		if old, ok := versions[doc.Code]; ok && old != req.SchemaVersion {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("inconsistent_schema_version", "documents.schema_version", i)
 		}
 		if _, ok := docs[doc.Code]; !ok {
 			pinned = append(pinned, models.PinnedDocument{Code: doc.Code, Version: req.SchemaVersion, Definition: v.Definition})
@@ -330,27 +345,27 @@ func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.Doss
 		docs[doc.Code] = v.Definition
 		versions[doc.Code] = req.SchemaVersion
 	}
-	for _, req := range d.Documents {
+	for i, req := range d.Documents {
 		if req.Condition != nil {
 			if !req.Conditional {
-				return nil, common.ErrInvalidArgument
+				return nil, invalidCatalogDefinition("condition_without_flag", "documents.condition", i)
 			}
 			c := req.Condition
 			def, ok := docs[c.DocumentType]
 			if !ok {
-				return nil, common.ErrInvalidArgument
+				return nil, invalidCatalogDefinition("condition_document_not_configured", "documents.condition.document_type", i)
 			}
 			field, found := lookupField(def, c.FieldKey)
 			if !found || (c.Operator != "equals" && c.Operator != "exists") || !configuredReference(d.Documents, c.DocumentType, c.Role) {
-				return nil, common.ErrInvalidArgument
+				return nil, invalidCatalogDefinition("invalid_condition_reference", "documents.condition", i)
 			}
 			if c.Operator == "equals" {
 				if _, err := normalizeField(c.Value, field.Type); err != nil {
-					return nil, common.ErrInvalidArgument
+					return nil, invalidCatalogDefinition("invalid_condition_value", "documents.condition.value", i)
 				}
 			}
 			if c.DocumentType == req.DocumentType {
-				return nil, common.ErrInvalidArgument
+				return nil, invalidCatalogDefinition("self_referencing_condition", "documents.condition.document_type", i)
 			}
 		}
 	}
@@ -380,7 +395,7 @@ func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.Doss
 	}
 	for node := range edges {
 		if cycle(node) {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("condition_cycle", "documents.condition", -1)
 		}
 	}
 	seen := map[string]bool{}
@@ -389,17 +404,23 @@ func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.Doss
 		if rule.Code == "" {
 			rule.Code = code("rule")
 		} else if !oldRule[rule.Code] {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("unknown_identifier", "rules.code", i)
 		}
 		if seen[rule.Code] {
-			return nil, common.ErrInvalidArgument
+			return nil, invalidCatalogDefinition("duplicate_identifier", "rules.code", i)
 		}
 		seen[rule.Code] = true
 		if rule.Severity == "" {
 			rule.Severity = "WARNING"
 		}
-		if strings.TrimSpace(rule.Name) == "" || len(rule.Name) > 300 || len(rule.Message) > 2000 || len(rule.Remediation) > 2000 || !compatibleRule(*rule, docs) || !configuredReference(d.Documents, rule.Left.DocumentType, rule.Left.Role) || !configuredReference(d.Documents, rule.Right.DocumentType, rule.Right.Role) {
-			return nil, common.ErrInvalidArgument
+		if strings.TrimSpace(rule.Name) == "" || len(rule.Name) > 300 || len(rule.Message) > 2000 || len(rule.Remediation) > 2000 {
+			return nil, invalidCatalogDefinition("invalid_rule_text", "rules", i)
+		}
+		if !compatibleRule(*rule, docs) {
+			return nil, invalidCatalogDefinition("incompatible_rule", "rules", i)
+		}
+		if !configuredReference(d.Documents, rule.Left.DocumentType, rule.Left.Role) || !configuredReference(d.Documents, rule.Right.DocumentType, rule.Right.Role) {
+			return nil, invalidCatalogDefinition("invalid_rule_role", "rules", i)
 		}
 	}
 	return pinned, nil

@@ -1,0 +1,93 @@
+services:
+  frontend:
+    image: duongtruong0409/sea-codex-frontend:latest
+    container_name: sea-codex-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:80"
+    environment:
+      HOST: 0.0.0.0
+      PORT: "80"
+      BACKEND_ORIGIN: http://api:8080
+    depends_on:
+      - api
+    networks:
+      - app-network
+      - proxy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: sea-codex-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-sea_codex_db_v2}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sea_codex_db_v2}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app-network
+
+  api:
+    image: ${APP_IMAGE:-chithanh1999/sea-codex-server:latest}
+    container_name: sea-codex-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgrespassword}
+      - POSTGRES_DBNAME=${POSTGRES_DB:-sea_codex_db_v2}
+      - POSTGRES_SSLMODE=disable
+      - POSTGRES_AUTO_MIGRATE=true
+      - HTTP_SERVER_PORT=8080
+      - HTTP_SERVER_LOG_LEVEL=info
+      - HTTP_SERVER_MODE=release
+      - UPLOADS_DIRECTORY=/app/storage/uploads
+      - PROCESSING_ENABLED=${PROCESSING_ENABLED:-true}
+      - PROCESSING_PROVIDER=openai-compatible
+      - PROCESSING_BASE_URL=${PROCESSING_BASE_URL:-https://api.openai.com/v1}
+      - PROCESSING_API_KEY=${PROCESSING_API_KEY:-}
+      - PROCESSING_MODEL=${PROCESSING_MODEL:-}
+      - PROCESSING_PDF_RENDERER=pdftoppm
+      # Explicit assistant values override OCR values. Empty values reuse OCR.
+      - ASSISTANT_ENABLED=${ASSISTANT_ENABLED:-false}
+      - ASSISTANT_BASE_URL=${ASSISTANT_BASE_URL:-https://api.openai.com}
+      - ASSISTANT_API_KEY=${ASSISTANT_API_KEY:-${PROCESSING_API_KEY:-}}
+      - ASSISTANT_MODEL=${ASSISTANT_MODEL:-${PROCESSING_MODEL:-}}
+      - ASSISTANT_TIMEOUT=${ASSISTANT_TIMEOUT:-30s}
+      - ASSISTANT_MAX_OUTPUT_TOKENS=${ASSISTANT_MAX_OUTPUT_TOKENS:-1500}
+      - ASSISTANT_REQUEST_LIMIT=${ASSISTANT_REQUEST_LIMIT:-10}
+      - ASSISTANT_RATE_WINDOW=${ASSISTANT_RATE_WINDOW:-1m}
+      - ASSISTANT_MAX_CONCURRENT_REQUESTS=${ASSISTANT_MAX_CONCURRENT_REQUESTS:-4}
+      - AUTH_PRIVATE_KEY_HEX=${AUTH_PRIVATE_KEY_HEX:?Missing AUTH_PRIVATE_KEY_HEX}
+      - AUTH_PUBLIC_KEY_HEX=${AUTH_PUBLIC_KEY_HEX:?Missing AUTH_PUBLIC_KEY_HEX}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads-data:/app/storage/uploads
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+  uploads-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  app-network:
+    driver: bridge
+  proxy:
+    external: true
+    name: proxy
