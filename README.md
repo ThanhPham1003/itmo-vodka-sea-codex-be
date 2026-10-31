@@ -1,57 +1,42 @@
 # SEA Codex Backend
 
-Backend nền tảng xử lý hồ sơ đa tenant, dùng Go 1.26, Gin, GORM và PostgreSQL. Source được tổ chức theo [skill create-new-apis](.agents/skills/SKILL.md) và [kế hoạch kiến trúc đã duyệt](docs/source-code-architecture.md).
+Backend đa tenant tiếp nhận hồ sơ theo nhiều đợt, phân loại/trích xuất tài liệu theo cấu hình công ty, đối soát và kiểm duyệt pháp lý. Dùng Go 1.26, Gin, GORM, PostgreSQL, PASETO v4.public và bcrypt; tổ chức module theo [skill create-new-apis](.agents/skills/SKILL.md).
 
-## Hiện trạng
-
-Đã dựng scaffold và endpoint public `GET /health`. Đã có config YAML/env, kết nối PostgreSQL, structured logger, PASETO v4.public, bcrypt, base model UUID, response/error helpers, auth/permission middleware và graceful shutdown.
-
-`auth`, `dossier`, `audit` hiện là khung package và điểm wiring, chưa có API nghiệp vụ hoặc bảng dữ liệu. Chưa có signup/login, upload/OCR, worker, catalog, đối soát, review hoặc dashboard. Auth middleware đã triển khai và kiểm thử bằng resolver giả trong test; resolver đọc user/company từ DB sẽ thuộc module auth. Thiếu resolver thì route được bảo vệ từ chối truy cập.
-
-[Thiết kế nghiệp vụ](docs/backend-system-design.md) chứa blueprint của hệ thống tham khảo, bao gồm mô tả các tính năng từng có ở source khác. Các mô tả đó không thể hiện tính năng đã triển khai trong repository này. [OpenAPI hiện tại](docs/api/api_spec.json) chỉ mô tả endpoint đã được kiểm chứng ở đây.
+Đã triển khai auth/thành viên, catalog có version, hồ sơ/checklist, upload ảnh/PDF, worker AI, đối soát, correction/review/reopen, PII/audit và dashboard. Xem [đối chiếu từng flow và phạm vi kiểm chứng](docs/implementation-coverage.md), [OpenAPI](docs/api/api_spec.json) và [hướng dẫn gọi API](docs/backend-api-guide.md). File [backend-system-design](docs/backend-system-design.md) được giữ nguyên làm yêu cầu đầu vào; các mô tả source tham khảo trong mục 10 không thay thế báo cáo kiểm chứng của repo này.
 
 ## Cấu trúc
 
 ```text
-cmd/
-  api/                  HTTP entrypoint
-  keygen/               Công cụ tạo key pair chủ động, chạy riêng
-config/                 YAML mẫu, không có secret thật
-internal/
-  bootstrap/            Composition root, router, HTTP lifecycle
-  common/               App, actor/tenant context, errors, DTO, base model, middleware
-  health/               Luồng service → logic → handler → routes hoàn chỉnh
-  auth/                 Company, user, membership và authentication — khung
-  dossier/              Catalog, hồ sơ, tài liệu, đối soát, review, dashboard — khung
-  audit/                Audit append-only theo tenant — khung
-pkg/
-  config/ database/ logger/ token/ utils/
-docs/
-  api/api_spec.json
+cmd/api/                HTTP entrypoint
+cmd/keygen/             Tạo PASETO key pair chủ động
+internal/bootstrap/     Config, DB, migrations, router, worker lifecycle
+internal/common/        Actor/tenant, permission, audit contract, DTO, middleware
+internal/auth/          Company, user, signup/login, member/access management
+internal/dossier/       Catalog, intake, processing, rules, review, privacy, dashboard
+internal/audit/         Audit append-only API theo tenant
+internal/health/        Liveness
+pkg/                    config, database, logger, token, utils, storage, ai, document
+scripts/openapi/        Sinh API contract từ DTO và danh sách route
+scripts/evaluation/     Synthetic PDF generator và script đánh giá
 ```
 
-Mỗi module nghiệp vụ có `dto`, `models`, `migrations`, `repositories`, `services`, `logic`, `presentation/handlers`, `routes/v1` và `server.go`. Handler gọi service qua registry; logic điều phối nghiệp vụ/transaction; repository chịu trách nhiệm persistence. Registry chỉ đăng ký ở startup, không được thay khi đang phục vụ request.
+Mỗi module có `dto → models/migrations → repositories → services/logic → presentation/handlers → routes/v1 → server.go`. Service registry được đăng ký khi startup và binding vào handler; transaction nghiệp vụ ghi cùng audit/status history. Repository kiểm tra tenant từ actor đã xác thực. Đây là tenant isolation ở ứng dụng; chưa có PostgreSQL RLS.
 
 ## Chạy local
 
-Cần Go 1.26+, PostgreSQL đang chạy và C toolchain để chạy test SQLite. Liveness không query DB mỗi request nhưng startup yêu cầu DB kết nối được. Chưa cần Docker, Redis, Poppler hoặc AI key cho scaffold.
+Cần Go 1.26+, PostgreSQL và C toolchain cho SQLite tests. Cài Poppler (`pdfinfo`, `pdftoppm`, `pdfseparate`, `pdfunite`) để xử lý PDF: `brew install poppler` trên macOS hoặc `apt-get install poppler-utils` trên Debian/Ubuntu. Chỉ dùng API auth/catalog không cần AI key; xử lý tài liệu cần provider vision thật.
 
-1. Tải dependency:
+1. Cài dependency và chuẩn bị database riêng:
 
    ```bash
    go mod download
-   ```
-
-2. Chuẩn bị database/user riêng. Ví dụ dưới đây dùng PostgreSQL chạy local; `createuser --pwprompt` yêu cầu bạn đặt password, không ghi password vào command history:
-
-   ```bash
    createuser --pwprompt sea_codex
    createdb --owner=sea_codex sea_codex
    ```
 
-   Các lệnh provisioning cần tài khoản PostgreSQL có quyền tạo user/database. Có thể dùng một database riêng đã được quản trị viên chuẩn bị thay thế.
+   Provisioning cần tài khoản PostgreSQL có quyền tạo user/database; cũng có thể dùng database do quản trị viên chuẩn bị.
 
-3. Tạo PASETO key pair một lần và nạp vào shell:
+2. Sinh key **một lần**, nạp vào shell:
 
    ```bash
    umask 077
@@ -61,77 +46,92 @@ Cần Go 1.26+, PostgreSQL đang chạy và C toolchain để chạy test SQLite
    set +a
    ```
 
-   `.env.keys` bị gitignore. Công cụ này chỉ xuất key khi bạn chủ động chạy; API không sinh key lúc startup. Dùng lại file này qua các lần restart; không tạo lại key nếu muốn giữ token hợp lệ.
+   Dùng lại key qua restart để token còn hợp lệ. `.env.keys` bị gitignore; không đưa vào image hoặc Git.
 
-4. Copy config và điền password của database vào file local đã bị gitignore:
+3. Copy config, điền database/password vào file local:
 
    ```bash
    cp config/app.development.yaml config/app.local.yaml
    ```
 
-   Sửa `postgres.password`, cùng host/port/user/dbname nếu cần. Bạn cũng có thể export `POSTGRES_PASSWORD` từ cơ chế secret của môi trường. Key đang được nạp từ shell ở bước 3, nên không cần chép private key vào YAML.
-
-5. Chạy server:
+4. Khởi tạo schema trong database riêng và chạy:
 
    ```bash
-   make run CONFIG=config/app.local.yaml
+   POSTGRES_AUTO_MIGRATE=true make run CONFIG=config/app.local.yaml
    ```
 
-6. Kiểm tra:
+   Lần đầu tạo 17 bảng nghiệp vụ. Startup mặc định `auto_migrate=false`; các lần sau chạy `make run CONFIG=config/app.local.yaml`. Khi nâng cấp schema, chạy migration có kiểm soát trước các replica phục vụ traffic.
+
+5. Kiểm tra:
 
    ```bash
    curl -i http://127.0.0.1:8080/health
    ```
 
-   ```json
-   {"code":200,"message":"Service is running","data":{"status":"ok"}}
-   ```
+   JSON dùng envelope `{code,message,data}`, kèm `X-Request-ID`. Ctrl+C/SIGTERM dừng worker và đóng DB pool.
 
-   Response có `X-Request-ID`. `POST /health` trả 405; path chưa triển khai trả 404, cùng JSON envelope. Dùng Ctrl+C hoặc SIGTERM để shutdown và đóng DB pool.
+## Bật AI processing
+
+Trong YAML local hoặc env, đặt provider/model/key thật rồi bật worker. Ví dụ cấu hình biến, thay placeholder bằng cấu hình môi trường của bạn:
+
+```bash
+export PROCESSING_ENABLED=true
+export PROCESSING_PROVIDER=anthropic
+export PROCESSING_BASE_URL=https://api.anthropic.com
+export PROCESSING_MODEL='<vision-model-id>'
+# Nạp PROCESSING_API_KEY qua secret của môi trường.
+make run CONFIG=config/app.local.yaml
+```
+
+Adapter `openai-compatible` dùng endpoint `/v1/chat/completions`, JSON output và ảnh base64; endpoint phải hỗ trợ `max_completion_tokens`, `response_format` và `store=false`. Base URL có thể kết thúc bằng `/v1`. Anthropic dùng `/v1/messages`. Không có model/key mặc định và không có kết quả OCR giả khi provider lỗi. Nội dung trang tài liệu được gửi tới provider cấu hình khi xử lý; gợi ý schema/rule chỉ gửi cấu hình.
+
+Worker mặc định **tắt**. Upload vẫn nhận và giữ trạng thái `UPLOADED`/`PROCESSING` khi chờ worker; bật processing và restart để xử lý. Poll mặc định 2s, concurrency 3 file/process, tối đa 10; tổng concurrency tăng theo số replica. Claim/lease nằm trong PostgreSQL, worker cũ bị từ chối khi claim đổi; đây là hàng đợi trong tiến trình API, chưa phải service queue độc lập.
 
 ## Cấu hình
 
-Viper đọc file `--config` và biến môi trường với tên viết hoa, dấu chấm đổi thành `_`. `.env.example` chỉ là danh sách tham khảo; API không tự đọc `.env`. Env được ưu tiên hơn YAML, kể cả env rỗng, nên env secret rỗng làm validation thất bại.
+API đọc YAML `--config` và env, không tự đọc `.env`. Env ưu tiên hơn YAML, kể cả env rỗng. [`.env.example`](.env.example) và [Docker env mẫu](config/docker.env.example) liệt kê biến.
 
 | Nhóm | Biến chính |
 | --- | --- |
-| HTTP | `HTTP_SERVER_HOST`, `HTTP_SERVER_PORT`, `HTTP_SERVER_MODE`, `HTTP_SERVER_LOG_LEVEL` |
-| Timeout | `HTTP_SERVER_READ_TIMEOUT`, `HTTP_SERVER_READ_HEADER_TIMEOUT`, `HTTP_SERVER_WRITE_TIMEOUT`, `HTTP_SERVER_IDLE_TIMEOUT`, `HTTP_SERVER_SHUTDOWN_TIMEOUT` |
-| PostgreSQL | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DBNAME`, `POSTGRES_SSLMODE` |
+| HTTP | `HTTP_SERVER_HOST`, `HTTP_SERVER_PORT`, `HTTP_SERVER_MODE`, `HTTP_SERVER_LOG_LEVEL`, `HTTP_SERVER_*_TIMEOUT` |
+| PostgreSQL | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DBNAME`, `POSTGRES_SSLMODE`, `POSTGRES_AUTO_MIGRATE` |
 | Pool | `POSTGRES_CONNECT_TIMEOUT`, `POSTGRES_MAX_OPEN_CONNS`, `POSTGRES_MAX_IDLE_CONNS`, `POSTGRES_CONN_MAX_LIFETIME` |
-| Auth | `AUTH_PRIVATE_KEY_HEX`, `AUTH_PUBLIC_KEY_HEX`, `AUTH_TOKEN_DURATION` |
+| Auth | `AUTH_PRIVATE_KEY_HEX`, `AUTH_PUBLIC_KEY_HEX`, `AUTH_TOKEN_DURATION`, `AUTH_REQUEST_LIMIT`, `AUTH_RATE_WINDOW` |
+| Files | `UPLOADS_DIRECTORY`, `UPLOADS_MAX_FILE_SIZE_MB`, `UPLOADS_MAX_FILES_PER_REQUEST`, `UPLOADS_MAX_PDF_PAGES` |
+| AI/worker | `PROCESSING_ENABLED`, `PROCESSING_PROVIDER`, `PROCESSING_BASE_URL`, `PROCESSING_API_KEY`, `PROCESSING_MODEL`, `PROCESSING_MAX_CONCURRENT_FILES`, `PROCESSING_POLL_INTERVAL`, `PROCESSING_TIMEOUT`, `PROCESSING_LEASE_DURATION`, `PROCESSING_MAX_PAGE_DIMENSION` |
 
-Duration dùng định dạng như `5s`, `30m`, `24h`. PASETO private key là 64 byte encoded hex, public key là 32 byte encoded hex; startup kiểm tra cặp key khớp nhau. Token chứa identity và mốc thời gian; company, role và quyền phải được resolve lại từ nguồn tin cậy mỗi request.
+Defaults: 20 MiB/file, 10 files/upload, 100 PDF pages, 1600px cạnh dài; timeout AI 90s, lease 5m. Duration như `5s`, `1m`, `24h`. `identifier` là định danh số giữ số 0 đầu; mã chữ/số dùng `text` kèm regex. PII được cấu hình theo trường; cần đánh dấu đúng trong schema.
 
-YAML mẫu local bind `127.0.0.1` và dùng `sslmode: disable` cho DB local. Image Docker dùng `config/app.docker.yaml`, bind `0.0.0.0` và mặc định yêu cầu TLS tới DB; cấu hình host/network/TLS theo hạ tầng. Không có AutoMigrate hoặc schema nghiệp vụ tự chạy lúc startup.
+Uploads là private local storage, cần persistent volume và backup cùng database. Các replica phải cùng nhìn thấy storage; triển khai nhiều máy cần shared storage hoặc thay adapter. Không có API xóa file gốc/retention tự động. Audit chặn sửa/xóa qua model và API; DB owner vẫn có quyền sửa dữ liệu, chưa có immutable storage ngoài DB.
 
 ## Docker và CI
 
-Đã có [Dockerfile](Dockerfile) multi-stage chạy bằng user `10001:10001` và [workflow GitHub Actions](.github/workflows/cicd.yaml) để test, kiểm tra container rồi push image `amd64`/`arm64` lên Docker Hub.
+[Dockerfile](Dockerfile) multi-stage, Poppler runtime, UID `10001:10001`. [CI](.github/workflows/cicd.yaml) chạy format/vet/test/build, evaluation tests và container smoke trước khi push Docker Hub `amd64`/`arm64`. [Hướng dẫn đầy đủ](docs/docker-and-ci.md) có volume uploads, migration và secrets.
 
-Cấu hình repository secrets `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`; tùy chọn variable `DOCKERHUB_REPOSITORY` (mặc định `sea-codex-server`). Push `main` tạo tag `latest` và `sha-<commit>`; push tag `v*` tạo tag release và `sha-<commit>`. Pull request chỉ kiểm tra, không publish.
+Secrets build/push: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` có quyền push; tùy chọn variable `DOCKERHUB_REPOSITORY`. Push `main`: `latest` và `sha-<commit>`; tag `v*`: release và SHA. Pull request không publish. CI không deploy ứng dụng.
 
-Xem [hướng dẫn Docker và CI](docs/docker-and-ci.md) để build/run local, cấu hình secrets và vận hành workflow. Password/key runtime được truyền khi chạy container.
-
-## Kiểm tra và build
+## Kiểm tra
 
 ```bash
 make check
+python3 -m unittest discover -s scripts/evaluation
 ```
 
-Lệnh này kiểm tra gofmt, chạy `go vet ./...`, `go test ./...` và build `bin/api`. Có thể dùng riêng `make fmt`, `make test`, `make vet`, `make build`.
+Chạy test Linux có đầy đủ Poppler:
 
-Test unit/HTTP chạy không cần PostgreSQL thật. Test base model dùng SQLite in-memory; không dùng kết quả đó để khẳng định tenant isolation hoặc behavior PostgreSQL. Các nhóm được kiểm tra gồm config/env/secret-safe errors, token/key/expiry/signature, bcrypt, UUID/soft delete, response envelope, auth/permission, request ID/log/recovery, health và route wiring.
+```bash
+docker build --target test -t sea-codex-server:flow-tests .
+```
 
-Xem [kết quả kiểm chứng scaffold](docs/scaffold-verification.md) để biết các lệnh đã chạy và phạm vi còn chưa triển khai.
+Test gồm auth/rollback/tenant, version snapshot, nhiều đợt upload, cảnh báo/BLOCKER, correction, assignment, review/reopen, PII/file audit, dashboard, claim/lease, provider HTTP contract/retry, PDF render/split và storage bounds. AI được mock bằng HTTP fixtures; không dùng test pass để suy ra độ chính xác trên hồ sơ thật. [Synthetic/evaluation](scripts/evaluation/README.md) cung cấp dữ liệu giả và cách chấm prediction thật.
 
-## Quy ước mở rộng
+Bootstrap integration tests mặc định dùng SQLite. Có thể chạy cùng bộ test trên PostgreSQL riêng; mỗi app test tạo schema UUID rồi xóa schema đó:
 
-- Triển khai API mới theo kế hoạch/test case được duyệt và đúng layer của skill.
-- Mọi repository nghiệp vụ phải nhận context và scope `company_id`; middleware permission không thay thế kiểm tra tenant/assignment tại service và DB.
-- Quyền mặc định `company_admin` gồm `pii:view` và `dashboard:read`; không có bypass tenant. Các quyền role còn lại sẽ được triển khai ở resolver của module auth.
-- Model user phải dùng `json:"-"` cho password hash; không log token, key, body/PII hoặc DSN. Audit không kế thừa soft delete của base model mutable.
-- Mutation nhiều entity cùng audit dùng một transaction, không gọi AI/file/network khi giữ khóa DB.
-- Chỉ cập nhật OpenAPI sau khi endpoint build/test đạt. Không khai báo API dự kiến như tính năng đã hoạt động.
+```bash
+TEST_POSTGRES_DSN='postgres://test_user@127.0.0.1:5432/test_database?sslmode=disable' \
+  go test -count=1 -v ./internal/bootstrap
+```
 
-Tham khảo thư viện: [PASETO Go](https://github.com/aidantwoods/go-paseto), [GORM PostgreSQL](https://gorm.io/docs/connecting_to_the_database.html), [Viper](https://github.com/spf13/viper).
+Tài khoản test cần quyền tạo schema trong database test. Không dùng production DSN. Sau build/test pass, cập nhật contract bằng `go run ./scripts/openapi`; test route parity kiểm tra spec khớp router.
+
+Chưa triển khai frontend, ảnh preview làm mờ, bảng địa chỉ hành chính 2025 hoặc UI benchmark (P2). Không có webhook/export/API key cho hệ thống ngoài vì thiết kế loại khỏi phạm vi.

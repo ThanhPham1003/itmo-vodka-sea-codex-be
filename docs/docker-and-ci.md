@@ -8,7 +8,7 @@
 - [`config/docker.env.example`](../config/docker.env.example): cấu hình mẫu để kết nối DB local từ Docker Desktop.
 - [`.github/workflows/cicd.yaml`](../.github/workflows/cicd.yaml): kiểm tra source/container trước khi push image đa kiến trúc.
 
-Image chứa `/app/api`, `/app/keygen` và YAML mẫu không có secrets. PASETO key và password được đưa vào lúc chạy, không dùng build args. Runtime chưa cài Poppler vì scaffold chưa có pipeline PDF/OCR.
+Image chứa `/app/api`, `/app/keygen` và YAML mẫu không có secrets. PASETO key và password được đưa vào lúc chạy, không dùng build args. Runtime có Poppler để render và tách PDF. Lưu file tại `/app/storage/uploads`.
 
 ## Build và chạy local
 
@@ -31,13 +31,14 @@ Dùng lại `.env.keys` qua các lần chạy. Copy env mẫu và điền passwo
 cp config/docker.env.example .env.docker
 ```
 
-`POSTGRES_HOST=host.docker.internal` dùng cho PostgreSQL chạy trên máy có Docker Desktop. Trên Linux hoặc server, đặt host database có thể truy cập từ container; nếu kết nối host Linux qua tên này thì thêm `--add-host=host.docker.internal:host-gateway` vào lệnh chạy. Database phải được chuẩn bị trước và cho phép kết nối từ container.
+`POSTGRES_HOST=host.docker.internal` dùng cho PostgreSQL chạy trên máy có Docker Desktop. Trên Linux hoặc server, đặt host database có thể truy cập từ container; nếu kết nối host Linux qua tên này thì thêm `--add-host=host.docker.internal:host-gateway` vào lệnh chạy. Database phải được chuẩn bị trước và cho phép kết nối từ container. Lần đầu khởi tạo schema, đặt `POSTGRES_AUTO_MIGRATE=true` trong `.env.docker`, khởi động một instance; sau đó đặt lại false. Bật OCR bằng PROCESSING_ENABLED=true, model và key runtime. Mặc định worker tắt.
 
 ```bash
 docker run --rm --name sea-codex-api \
   --env-file .env.docker \
   --env-file .env.keys \
   --publish 127.0.0.1:8080:8080 \
+  --mount type=volume,src=sea-codex-uploads,dst=/app/storage/uploads \
   sea-codex-server:local
 ```
 
@@ -91,7 +92,7 @@ Thay repository nếu đã đặt `DOCKERHUB_REPOSITORY`. Workflow chỉ publish
 
 ## Phạm vi kiểm chứng
 
-Source được kiểm tra bằng `make check`; binary được cross-compile với `CGO_ENABLED=0` cho Linux `amd64` và `arm64`. Workflow được kiểm tra bằng actionlint.
+Test stage `docker build --target test .` chạy vet và Go tests với Poppler thật. CI cài poppler-utils và chạy thêm unit tests của script đánh giá. Source được kiểm tra bằng `make check`; binary được cross-compile với `CGO_ENABLED=0` cho Linux `amd64` và `arm64`. Workflow được kiểm tra bằng actionlint.
 
 Khi kiểm tra lỗi CI, đã khởi động Docker Desktop và tái hiện bằng image `linux/amd64`: `--help` trả exit code 0, còn kiểm tra quyền đọc config trả exit code 1. Nguyên nhân là `COPY --chmod=0444` tạo thư mục `/app/config` với mode `0444`, khiến UID `10001` không đi vào được thư mục.
 

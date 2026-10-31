@@ -1,3 +1,2 @@
-// Package models reserves the audit layer for tenant-owned GORM entities; embed common models.BaseModel except append-only audit entities.
-// Business behavior is not implemented in the initial scaffold.
+// Package models implements the audit models layer.
 package models

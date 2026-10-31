@@ -1,3 +1,2 @@
-// Package v1 reserves the dossier layer for versioned routes and authentication/permission middleware.
-// Business behavior is not implemented in the initial scaffold.
+// Package v1 implements the dossier v1 layer.
 package v1

@@ -32,8 +32,16 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install PDF processing tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
       - name: Verify source
         run: make check
+
+      - name: Verify evaluation metrics
+        run: python3 -m unittest discover -s scripts/evaluation
 
   container:
     name: Build and check container

@@ -16,6 +16,8 @@ type Config struct {
 	HTTPServer HTTPServerConfig `mapstructure:"http_server"`
 	Postgres   PostgresConfig   `mapstructure:"postgres"`
 	Auth       AuthConfig       `mapstructure:"auth"`
+	Uploads    UploadsConfig    `mapstructure:"uploads"`
+	Processing ProcessingConfig `mapstructure:"processing"`
 }
 
 type HTTPServerConfig struct {
@@ -45,12 +47,34 @@ type PostgresConfig struct {
 	MaxOpenConns    int           `mapstructure:"max_open_conns"`
 	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
 	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
+	AutoMigrate     bool          `mapstructure:"auto_migrate"`
 }
 
 type AuthConfig struct {
 	PrivateKeyHex string        `mapstructure:"private_key_hex" json:"-"`
 	PublicKeyHex  string        `mapstructure:"public_key_hex"`
 	TokenDuration time.Duration `mapstructure:"token_duration"`
+	RequestLimit  int           `mapstructure:"request_limit"`
+	RateWindow    time.Duration `mapstructure:"rate_window"`
+}
+
+type UploadsConfig struct {
+	Directory          string `mapstructure:"directory"`
+	MaxFileSizeMB      int64  `mapstructure:"max_file_size_mb"`
+	MaxFilesPerRequest int    `mapstructure:"max_files_per_request"`
+	MaxPDFPages        int    `mapstructure:"max_pdf_pages"`
+}
+type ProcessingConfig struct {
+	Enabled            bool          `mapstructure:"enabled"`
+	Provider           string        `mapstructure:"provider"`
+	BaseURL            string        `mapstructure:"base_url"`
+	APIKey             string        `mapstructure:"api_key" json:"-"`
+	Model              string        `mapstructure:"model"`
+	PollInterval       time.Duration `mapstructure:"poll_interval"`
+	MaxConcurrentFiles int           `mapstructure:"max_concurrent_files"`
+	Timeout            time.Duration `mapstructure:"timeout"`
+	LeaseDuration      time.Duration `mapstructure:"lease_duration"`
+	MaxPageDimension   int           `mapstructure:"max_page_dimension"`
 }
 
 // Validate reports field names, never configuration values or secrets.
@@ -101,6 +125,21 @@ func (c Config) Validate() error {
 	}
 	if c.Auth.TokenDuration < time.Second {
 		return invalid("auth.token_duration must be at least one second")
+	}
+	if c.Auth.RequestLimit < 1 || c.Auth.RateWindow <= 0 {
+		return invalid("auth rate limit must be positive")
+	}
+	if c.Uploads.Directory == "" || c.Uploads.MaxFileSizeMB < 1 || c.Uploads.MaxFileSizeMB > 100 || c.Uploads.MaxFilesPerRequest < 1 || c.Uploads.MaxFilesPerRequest > 50 || c.Uploads.MaxPDFPages < 1 || c.Uploads.MaxPDFPages > 500 {
+		return invalid("uploads limits are invalid")
+	}
+	if c.Processing.PollInterval <= 0 || c.Processing.MaxConcurrentFiles < 1 || c.Processing.MaxConcurrentFiles > 10 || c.Processing.Timeout <= 0 || c.Processing.LeaseDuration <= c.Processing.Timeout || c.Processing.MaxPageDimension < 256 || c.Processing.MaxPageDimension > 4096 {
+		return invalid("processing limits are invalid")
+	}
+	if c.Processing.Enabled && (c.Processing.APIKey == "" || c.Processing.Model == "" || c.Processing.BaseURL == "") {
+		return invalid("processing provider/model/key are required when enabled")
+	}
+	if c.Processing.Provider != "anthropic" && c.Processing.Provider != "openai-compatible" {
+		return invalid("processing.provider is unsupported")
 	}
 	return nil
 }

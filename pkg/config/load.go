@@ -19,9 +19,9 @@ func LoadConfig(path string) (*Config, error) {
 	defaults := map[string]any{
 		"http_server.host": "127.0.0.1", "http_server.port": 8080,
 		"http_server.mode": "release", "http_server.log_level": "info",
-		"http_server.read_timeout":        15 * time.Second,
+		"http_server.read_timeout":        120 * time.Second,
 		"http_server.read_header_timeout": 5 * time.Second,
-		"http_server.write_timeout":       30 * time.Second,
+		"http_server.write_timeout":       120 * time.Second,
 		"http_server.idle_timeout":        60 * time.Second,
 		"http_server.shutdown_timeout":    10 * time.Second,
 		"postgres.host":                   "127.0.0.1", "postgres.port": 5432,
@@ -31,6 +31,11 @@ func LoadConfig(path string) (*Config, error) {
 		"postgres.conn_max_lifetime": 30 * time.Minute,
 		"auth.private_key_hex":       "", "auth.public_key_hex": "",
 		"auth.token_duration": 24 * time.Hour,
+		"auth.request_limit":  20, "auth.rate_window": time.Minute,
+		"postgres.auto_migrate": false,
+		"uploads.directory":     "./storage/uploads", "uploads.max_file_size_mb": 20, "uploads.max_files_per_request": 10, "uploads.max_pdf_pages": 100,
+		"processing.enabled": false, "processing.provider": "anthropic", "processing.base_url": "https://api.anthropic.com", "processing.api_key": "", "processing.model": "",
+		"processing.poll_interval": 2 * time.Second, "processing.max_concurrent_files": 3, "processing.timeout": 90 * time.Second, "processing.lease_duration": 5 * time.Minute, "processing.max_page_dimension": 1600,
 	}
 	for key, value := range defaults {
 		v.SetDefault(key, value)

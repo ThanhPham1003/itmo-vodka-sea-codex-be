@@ -18,4 +18,6 @@ type App struct {
 	TokenManager     token.ITokenManager
 	IdentityResolver IdentityResolver
 	Router           *gin.Engine
+	AuditWriter      AuditWriter
+	Workers          []BackgroundWorker
 }

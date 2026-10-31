@@ -11,6 +11,12 @@
 !pkg/**
 !config/
 !config/app.docker.yaml
+!scripts/
+!scripts/openapi/
+!scripts/openapi/**
+!docs/
+!docs/api/
+!docs/api/api_spec.json
 
 # Keep nested local secrets out even inside source directories.
 **/.env

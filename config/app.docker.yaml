@@ -4,9 +4,9 @@ http_server:
   port: 8080
   mode: release
   log_level: info
-  read_timeout: 15s
+  read_timeout: 120s
   read_header_timeout: 5s
-  write_timeout: 30s
+  write_timeout: 120s
   idle_timeout: 60s
   shutdown_timeout: 10s
 
@@ -21,8 +21,31 @@ postgres:
   max_open_conns: 10
   max_idle_conns: 5
   conn_max_lifetime: 30m
+  auto_migrate: false
 
 auth:
   private_key_hex: ""
   public_key_hex: ""
   token_duration: 24h
+  request_limit: 20
+  rate_window: 1m
+
+# Local/private file storage. Keep this directory on a persistent volume.
+uploads:
+  directory: /app/storage/uploads
+  max_file_size_mb: 20
+  max_files_per_request: 10
+  max_pdf_pages: 100
+
+# Set model/key explicitly. Background processing is opt-in.
+processing:
+  enabled: false
+  provider: anthropic
+  base_url: https://api.anthropic.com
+  api_key: ""
+  model: ""
+  poll_interval: 2s
+  max_concurrent_files: 3
+  timeout: 90s
+  lease_duration: 5m
+  max_page_dimension: 1600

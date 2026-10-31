@@ -20,10 +20,20 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -mod=readonly -trimpath -ldflags="-s -w" -o /out/keygen ./cmd/keygen
 
+FROM build AS test
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends poppler-utils && \
+    rm -rf /var/lib/apt/lists/*
+COPY scripts/ ./scripts/
+COPY docs/api/ ./docs/api/
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go vet ./... && go test ./...
+
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates tzdata && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates tzdata poppler-utils && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd --gid 10001 app && \
     useradd --uid 10001 --gid 10001 --no-create-home --home-dir /app --shell /usr/sbin/nologin app && \

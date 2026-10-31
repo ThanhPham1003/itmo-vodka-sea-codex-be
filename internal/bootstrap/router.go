@@ -16,7 +16,7 @@ import (
 )
 
 func NewRouter(app *common.App) (*gin.Engine, error) {
-	if app == nil || app.Router != nil {
+	if app == nil || app.DB == nil || app.Config == nil || app.TokenManager == nil || app.Router != nil {
 		return nil, fmt.Errorf("%w: application missing or router already initialized", common.ErrInvalidArgument)
 	}
 	router := gin.New()
@@ -30,8 +30,8 @@ func NewRouter(app *common.App) (*gin.Engine, error) {
 	app.Router = router
 
 	health.RegisterServices(app)
-	auth.RegisterServices(app)
 	audit.RegisterServices(app)
+	auth.RegisterServices(app)
 	dossier.RegisterServices(app)
 	health.NewServer(app)
 	auth.NewServer(app)
