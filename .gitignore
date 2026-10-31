@@ -1,0 +1,11 @@
+/bin/
+/storage/
+/coverage.out
+/coverage.html
+.env
+.env.*
+!.env.example
+/config/*.local.yaml
+/config/*.local.yml
+*.log
+.DS_Store

@@ -1,0 +1,99 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SEA Codex Backend API",
+    "version": "0.1.0",
+    "description": "Verified scaffold API. Only process liveness is implemented. Auth, dossier and audit business APIs are reserved for subsequent implementation."
+  },
+  "servers": [
+    { "url": "/" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Check HTTP process liveness",
+        "description": "Public liveness endpoint. Does not query PostgreSQL or check OCR availability. Application startup separately requires valid PostgreSQL and PASETO configuration.",
+        "tags": ["Health"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "description": "A UUID used for correlation. Missing or invalid values are replaced with a generated UUID.",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTTP process is running",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Correlation ID",
+                "schema": { "type": "string", "format": "uuid" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" },
+                "example": {
+                  "code": 200,
+                  "message": "Service is running",
+                  "data": { "status": "ok" }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Liveness service unavailable or request context cancelled",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Correlation ID",
+                "schema": { "type": "string", "format": "uuid" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "integer", "enum": [200] },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {
+              "status": { "type": "string", "enum": ["ok"] }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "integer" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "enum": [null],
+            "description": "Always null for errors. Internal causes and stack traces are not returned."
+          }
+        }
+      }
+    }
+  }
+}

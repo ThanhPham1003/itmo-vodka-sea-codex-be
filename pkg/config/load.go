@@ -1,0 +1,53 @@
+package config
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/spf13/viper"
+)
+
+// LoadConfig requires a YAML file; explicitly bound environment variables override it.
+// It intentionally does not read .env files or use Viper's process-wide singleton.
+func LoadConfig(path string) (*Config, error) {
+	v := viper.New()
+	v.SetConfigFile(path)
+	v.SetConfigType("yaml")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AllowEmptyEnv(true)
+	defaults := map[string]any{
+		"http_server.host": "127.0.0.1", "http_server.port": 8080,
+		"http_server.mode": "release", "http_server.log_level": "info",
+		"http_server.read_timeout":        15 * time.Second,
+		"http_server.read_header_timeout": 5 * time.Second,
+		"http_server.write_timeout":       30 * time.Second,
+		"http_server.idle_timeout":        60 * time.Second,
+		"http_server.shutdown_timeout":    10 * time.Second,
+		"postgres.host":                   "127.0.0.1", "postgres.port": 5432,
+		"postgres.user": "", "postgres.password": "", "postgres.dbname": "",
+		"postgres.sslmode": "require", "postgres.connect_timeout": 5 * time.Second,
+		"postgres.max_open_conns": 10, "postgres.max_idle_conns": 5,
+		"postgres.conn_max_lifetime": 30 * time.Minute,
+		"auth.private_key_hex":       "", "auth.public_key_hex": "",
+		"auth.token_duration": 24 * time.Hour,
+	}
+	for key, value := range defaults {
+		v.SetDefault(key, value)
+		if err := v.BindEnv(key); err != nil {
+			return nil, fmt.Errorf("bind configuration environment: %w", err)
+		}
+	}
+	if err := v.ReadInConfig(); err != nil {
+		// Parser errors can contain YAML snippets, including secrets.
+		return nil, fmt.Errorf("%w: cannot read configuration file or invalid YAML", ErrInvalidConfiguration)
+	}
+	var cfg Config
+	if err := v.UnmarshalExact(&cfg); err != nil {
+		return nil, fmt.Errorf("%w: unknown key or invalid field type", ErrInvalidConfiguration)
+	}
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("validate configuration: %w", err)
+	}
+	return &cfg, nil
+}
