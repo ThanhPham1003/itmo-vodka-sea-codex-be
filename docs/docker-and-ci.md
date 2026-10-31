@@ -61,6 +61,7 @@ docker logs --since 10m <container-id> 2>&1 | grep 'catalog suggestion failed'
 - `stage`: `ai_request` (gọi/đọc kết quả provider), `decode` (JSON sai schema), `validation` (cấu hình không hợp lệ), `audit` (ghi audit thất bại).
 - `stage=decode` có thêm `decode_error` (ví dụ `unknown_field`, `type_mismatch`), `json_field` nếu tên trường thuộc schema hoặc các wrapper phổ biến, và `expected_type`/`actual_type` khi sai kiểu. Tên trường tùy ý có thể chứa dữ liệu cá nhân nên không được ghi ra log.
 - Validation loại hồ sơ có thêm `validation_error`, `json_field` và `item_index` (đếm từ 0) khi lỗi thuộc phần tử mảng. Ví dụ `duplicate_document_role`, `missing_trigger_reason`, `schema_version_unavailable`, `unknown_identifier`, `document_type_not_selected`. Chỉ ghi mã quy tắc, tên trường cố định và chỉ số; không ghi giá trị cấu hình.
+- Gợi ý quy tắc dùng cùng bộ kiểm tra với lưu cấu hình. `invalid_rule_role` nghĩa là vai trò trong quy tắc chưa được cấu hình cho đúng loại giấy tờ. Khi PUT bị từ chối, tìm log `catalog save rejected` theo `request_id`; log có `validation_error`, `json_field`, `item_index`, không ghi nội dung quy tắc hay token.
 - `reason`: ví dụ `timeout`, `network_error`, `provider_http_error`, `output_truncated`, `invalid_json_content`, `invalid_schema`, `invalid_definition`.
 - Lỗi AI client có thêm `provider`, `model`, `timeout_ms` đang áp dụng, `attempt` (số lần gọi), `upstream_status` (0 khi chưa có HTTP response), và `provider_error_code` nếu thuộc danh sách mã lỗi đã biết.
 

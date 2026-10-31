@@ -41,6 +41,8 @@ Assignee là thành viên active có dossier:read, không phải broker. Cấp d
 
 Một document type dùng nhiều lần cần role hoặc subject_field để ghép đúng đối tượng. Engine chỉ đối soát các cặp một-một có subject tin cậy; mơ hồ/thiếu/không parse được tạo WARNING thay vì chọn trường confidence cao bất kỳ. Nhiều đối tượng ghép đúng được kiểm tra từng cặp.
 
+`rules[].left/right.role` là bộ lọc vai trò của giấy tờ, không phải tên vai trò suy ra từ nhãn trường. Vai trò khác rỗng phải tồn tại trong `documents[]` của đúng `document_type`; rỗng nghĩa là không lọc theo vai trò. Ví dụ giấy tờ chỉ có `role:""` thì quy tắc không được tự đặt `role:"bên mua"` dù trường có tên “Họ tên bên mua”. API gợi ý quy tắc giới hạn code/field/role theo cấu hình và schema đã pin, rồi dùng cùng bộ kiểm tra với PUT trước khi trả bản nháp. Gợi ý không thay đổi yêu cầu giấy tờ và không tự lưu.
+
 Conditional requirement hỗ trợ điều kiện một trường `equals`/`exists` có kiểu, cùng tenant và có tài liệu nguồn trong cấu hình. Dependency vòng bị từ chối. Không phải DSL biểu thức tổng quát; chưa có AND/OR/nested expression. Không có condition thì checklist chờ xác nhận thủ công; thêm/bỏ phát sinh phải có lý do.
 
 ## Tạo hồ sơ, upload nhiều đợt và xử lý
