@@ -81,3 +81,5 @@ Mutation gửi `expected_version` từ detail mới nhất. 409 nghĩa version c
 `transitions` đếm mọi lần chuyển vào trạng thái; `unique` đếm dossier/status duy nhất trong kỳ và dossier/status/day trong từng ngày; `current` là snapshot hiện tại, trả range_applies=false. Drill-down qua `GET /dossiers` giữ status/from/to/timezone/dossier_type; lọc thời gian dựa vào status history, không ép trạng thái hiện tại vẫn giống quá khứ.
 
 `GET /audit-logs` hỗ trợ action, actor_id, resource_id, dossier_id, from/to RFC3339, limit/offset. Audit không có update/delete API. Các event chứa ID/version/status, không chứa ảnh hoặc giá trị PII gốc. Không có API xem raw decision snapshot.
+
+Mỗi event có `actor_name` để hiển thị người thực hiện: họ tên hiện tại, fallback username nếu họ tên trống. Chỉ resolve user thuộc cùng công ty của event, bao gồm tài khoản inactive/xóa mềm để giữ thông tin truy vết. User không còn bản ghi hoặc tác vụ hệ thống (`actor_id` là UUID zero) có `actor_name` rỗng; UI hiển thị nhãn phù hợp. `actor_id` giữ nguyên để lọc/tham chiếu. Đây là trường đọc tính từ user, không thêm cột DB, không sửa event cũ và không phải snapshot tên tại thời điểm xảy ra sự kiện.

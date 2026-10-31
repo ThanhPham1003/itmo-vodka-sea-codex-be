@@ -9,10 +9,12 @@ import (
 )
 
 type AuditLog struct {
-	DossierID  *uuid.UUID     `gorm:"type:uuid;index" json:"dossier_id,omitempty"`
-	ID         uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	CompanyID  uuid.UUID      `gorm:"type:uuid;not null;index:idx_audit_company_time,priority:1" json:"company_id"`
-	ActorID    uuid.UUID      `gorm:"type:uuid;not null" json:"actor_id"`
+	DossierID *uuid.UUID `gorm:"type:uuid;index" json:"dossier_id,omitempty"`
+	ID        uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
+	CompanyID uuid.UUID  `gorm:"type:uuid;not null;index:idx_audit_company_time,priority:1" json:"company_id"`
+	ActorID   uuid.UUID  `gorm:"type:uuid;not null" json:"actor_id"`
+	// Resolved on reads only; existing immutable events and database schema stay intact.
+	ActorName  string         `gorm:"->;-:migration" json:"actor_name"`
 	Action     string         `gorm:"not null;size:100;index" json:"action"`
 	Resource   string         `gorm:"not null;size:100" json:"resource"`
 	ResourceID uuid.UUID      `gorm:"type:uuid;not null;index" json:"resource_id"`
