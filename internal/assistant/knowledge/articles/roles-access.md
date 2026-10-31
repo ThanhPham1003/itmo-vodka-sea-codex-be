@@ -1,9 +1,9 @@
-{"id":"roles-access","version":"2026-10-31.v1","aliases":["vai trò","phân quyền","broker","manager","legal","notary","permissions","access"],"pages":["members"],"sources":["internal/common/permissions.go"],"revision":"1a3ee150f43d1f01f60d16d0484e79b66dd92021","translations":{"vi":{"title":"Vai trò và quyền truy cập"},"en":{"title":"Roles and access"}}}
+{"id":"roles-access","version":"2026-10-31.v2","aliases":["vai trò","phân quyền","broker","manager","legal","notary","permissions","access"],"pages":["members"],"sources":["internal/common/permissions.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Vai trò và quyền truy cập"},"en":{"title":"Roles and access"}}}
 
 ## vi
 
-Broker mặc định tạo/đọc/tải giấy tờ trong phạm vi được phép; chuyên viên pháp lý kiểm tra, sửa và kiểm duyệt; notary đọc hồ sơ trong phạm vi, xem ảnh/PII theo quyền; manager theo dõi và phân công; company_admin quản trị thành viên, cấu hình và nghiệp vụ trong công ty. Quyền bổ sung có thể khác mặc định. Nút thao tác còn phụ thuộc trạng thái và phân công. Bot không cấp quyền.
+Nhân viên môi giới thường tạo hồ sơ và thêm giấy tờ trong phạm vi được giao. Chuyên viên pháp lý kiểm tra, sửa thông tin và kiểm duyệt. Công chứng viên xem hồ sơ và giấy tờ trong phạm vi được phép. Quản lý theo dõi và phân công công việc. Quản trị công ty quản lý thành viên, cấu hình và nghiệp vụ của công ty. Quyền cụ thể có thể được điều chỉnh. Một nút thao tác chỉ xuất hiện khi tài khoản, người phụ trách và tình trạng hồ sơ phù hợp. Nếu thiếu quyền, hãy liên hệ quản trị; trợ lý không tự cấp quyền.
 
 ## en
 
-Default roles: brokers create/read/upload accessible dossiers; legal specialists inspect, correct and review; notaries read accessible dossiers with image/PII permissions; managers monitor and assign; company administrators manage company members, configuration and workflows. Additional permissions may change defaults. Buttons also depend on state and assignment. The assistant cannot grant permissions.
+Brokers usually create dossiers and add documents within their access. Legal specialists inspect, correct information and review dossiers. Notaries view dossiers and documents within their access. Managers monitor and assign work. Company administrators manage members, settings and company workflows. Individual permissions may vary. Available buttons also depend on the responsible person and dossier state. Contact an administrator if access is missing; the assistant cannot grant it.

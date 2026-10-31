@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"regexp"
 	"sea-codex-server/internal/assistant/repositories"
 	"sea-codex-server/internal/common"
 	"testing"
@@ -37,6 +38,13 @@ func TestKnowledgeRetrieval(t *testing.T) {
 	list, err := r.List(context.Background())
 	require.NoError(t, err)
 	assert.Len(t, list, 18)
+	internal := regexp.MustCompile(`\b[A-Za-z]+_[A-Za-z_]+\b|\b[a-z]+:[a-z_]+\b|\b(?:WARNING|BLOCKER|FAILED|PII|snapshot|schema|worker)\b`)
+	for _, article := range list {
+		for locale, translation := range article.Translations {
+			assert.NotRegexp(t, internal, translation.Content, article.ID+" "+locale)
+			assert.NotRegexp(t, internal, translation.Title, article.ID+" title")
+		}
+	}
 	list[0].Translations["vi"] = list[0].Translations["en"]
 	other, err := r.Get(context.Background(), list[0].ID)
 	require.NoError(t, err)

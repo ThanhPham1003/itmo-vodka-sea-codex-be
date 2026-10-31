@@ -1,9 +1,9 @@
-{"id":"common-errors","version":"2026-10-31.v1","aliases":["lỗi","kết nối","401","403","5xx","connection","errors"],"pages":["connection"],"sources":["internal/common/errors.go"],"revision":"1a3ee150f43d1f01f60d16d0484e79b66dd92021","translations":{"vi":{"title":"Kết nối và lỗi thường gặp"},"en":{"title":"Connection and common errors"}}}
+{"id":"common-errors","version":"2026-10-31.v2","aliases":["lỗi","kết nối","401","403","5xx","connection","errors"],"pages":["connection"],"sources":["internal/common/errors.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Kết nối và lỗi thường gặp"},"en":{"title":"Connection and common errors"}}}
 
 ## vi
 
-401: đăng nhập lại nếu phiên hết hạn. 403: nhờ quản trị kiểm tra quyền. 409: tải lại và kiểm tra dữ liệu/trạng thái thay đổi. 5xx/kết nối: xem Kết nối backend, ghi thời điểm/request ID rồi báo phụ trách. Không xóa volume, chạy migration hay đổi token để vượt lỗi UI. Vận hành VM ngoài phạm vi bot.
+Nếu phiên hết hạn, hãy đăng nhập lại. Nếu không có quyền thực hiện, liên hệ quản trị công ty. Nếu dữ liệu đã thay đổi, tải lại và kiểm tra thông tin mới nhất trước khi tiếp tục. Khi không kết nối được, xem màn Kết nối backend và báo thời điểm, nội dung thông báo cho người hỗ trợ. Trợ lý hướng dẫn thao tác trên ứng dụng; các vấn đề cài đặt máy chủ cần người phụ trách kỹ thuật xử lý.
 
 ## en
 
-401: sign in again if the session expired. 403: ask an administrator to check permissions. 409: reload and inspect changed data/state. Connection/5xx: check Backend connection and report the time and request ID. Do not delete volumes, run migrations or change tokens to bypass UI errors. VM administration is outside assistant scope.
+If your session expires, sign in again. If access is denied, contact the company administrator. If information has changed, reload and check the latest details before continuing. For connection problems, check Backend connection and report the time and displayed message to support. The assistant helps with using the application; server setup issues need the technical support team.
