@@ -1,9 +1,9 @@
-{"id":"create-intake","version":"2026-10-31.v1","aliases":["tạo hồ sơ","tiếp nhận","nhiều đợt","intake","batches","create dossier"],"pages":["dossiers","detail"],"sources":["internal/dossier/logic/intake.go"],"revision":"1a3ee150f43d1f01f60d16d0484e79b66dd92021","translations":{"vi":{"title":"Tạo hồ sơ và tiếp nhận nhiều đợt"},"en":{"title":"Creating dossiers and intake batches"}}}
+{"id":"create-intake","version":"2026-10-31.v2","aliases":["tạo hồ sơ","tiếp nhận","nhiều đợt","intake","batches","create dossier"],"pages":["dossiers","detail"],"sources":["internal/dossier/logic/intake.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Tạo hồ sơ và tiếp nhận nhiều đợt"},"en":{"title":"Creating dossiers and intake batches"}}}
 
 ## vi
 
-Vào Hồ sơ, tạo hồ sơ theo loại bộ hồ sơ đã cấu hình. Trong chi tiết dùng Thêm tài liệu / Tiếp nhận tài liệu để tải bổ sung nhiều đợt. Kết quả trả riêng từng tệp. Upload thành công chưa đồng nghĩa OCR xong; xem checklist Tổng quan và tab Tài liệu. Hồ sơ đã kết thúc có thể bị khóa chỉnh sửa.
+Vào Hồ sơ, tạo hồ sơ và chọn loại bộ hồ sơ đã được thiết lập. Mở chi tiết hồ sơ rồi chọn Thêm tài liệu để bổ sung giấy tờ theo từng đợt. Kiểm tra kết quả của từng tệp. Tải lên thành công chưa có nghĩa hệ thống đã đọc xong thông tin; theo dõi danh mục giấy tờ trong Tổng quan và tab Tài liệu. Việc thêm hoặc sửa còn phụ thuộc quyền của bạn và hồ sơ có đang cho phép chỉnh sửa hay không.
 
 ## en
 
-Open Dossiers and create a dossier using a configured dossier type. In details use Add documents / Receive documents for further batches. Each file has its own intake result. A successful upload does not mean OCR is finished; inspect the Overview checklist and Documents. Finalized dossiers may be locked against changes.
+Open Dossiers, create a dossier and choose a configured dossier type. In its details choose Add documents to add further batches. Check the result for each file. A successful upload does not mean the system has finished reading it; check the document checklist in Overview and the Documents tab. Adding or editing depends on your access and whether the dossier allows changes.

@@ -1,9 +1,9 @@
-{"id":"field-corrections","version":"2026-10-31.v1","aliases":["sửa trường","đọc sai","confidence","trích xuất","correction","extracted fields"],"pages":["detail"],"sources":["internal/dossier/logic/normalization.go"],"revision":"1a3ee150f43d1f01f60d16d0484e79b66dd92021","translations":{"vi":{"title":"Kiểm tra và sửa trường trích xuất"},"en":{"title":"Correcting extracted fields"}}}
+{"id":"field-corrections","version":"2026-10-31.v2","aliases":["sửa trường","đọc sai","confidence","trích xuất","correction","extracted fields"],"pages":["detail"],"sources":["internal/dossier/logic/normalization.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Kiểm tra và sửa thông tin đã đọc"},"en":{"title":"Checking and correcting information"}}}
 
 ## vi
 
-Trong Tài liệu, đối chiếu trường với đúng ảnh/trang nguồn. Người có quyền sửa bằng giá trị có căn cứ và lý do, sau đó kiểm tra lại đối soát/trạng thái. Không suy diễn số CCCD, diện tích hay giá trị thiếu. Confidence là độ tin cậy xử lý, không bảo đảm giá trị pháp lý; dữ liệu thấp có thể cần xác minh.
+Trong tab Tài liệu, đối chiếu thông tin đã đọc với đúng ảnh hoặc trang giấy tờ gốc. Nếu có quyền chỉnh sửa, nhập giá trị có căn cứ và lý do, rồi kiểm tra lại kết quả so sánh và tình trạng hồ sơ. Không tự điền số định danh, diện tích hay thông tin còn thiếu bằng cách suy đoán. Mức độ chắc chắn của việc đọc thông tin không phải là xác nhận giấy tờ có giá trị pháp lý.
 
 ## en
 
-In Documents, compare each field against the correct image and source page. Authorized users correct with evidence-based values and reasons, then inspect updated cross-checks. Do not invent missing identifiers, areas or amounts. Confidence measures processing confidence, not legal validity; low-confidence evidence may require verification.
+In Documents, compare the information read with the correct original image or page. If you have editing access, enter an evidence-based correction and a reason, then check the updated comparisons and dossier state. Do not guess missing identity numbers, areas or other information. Reading confidence does not confirm a document is legally valid.

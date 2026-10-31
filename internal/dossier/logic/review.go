@@ -35,8 +35,11 @@ func (l *DossierLogic) Review(ctx context.Context, id uuid.UUID, in dto.ReviewRe
 		if !canRead(a, b.Dossier) {
 			return common.ErrNotFound
 		}
-		if !editable(b.Dossier) || b.Dossier.Version != in.ExpectedVersion {
-			return common.ErrConflict
+		if !editable(b.Dossier) {
+			return l.reviewConflict(ctx, b.Dossier, in, "dossier_locked", 0)
+		}
+		if b.Dossier.Version != in.ExpectedVersion {
+			return l.reviewConflict(ctx, b.Dossier, in, "version_mismatch", 0)
 		}
 		if a.Role != common.RoleCompanyAdmin && (b.Dossier.AssigneeID == nil || *b.Dossier.AssigneeID != a.UserID) {
 			return common.ErrForbidden
@@ -48,16 +51,23 @@ func (l *DossierLogic) Review(ctx context.Context, id uuid.UUID, in dto.ReviewRe
 		switch in.Action {
 		case "APPROVE":
 			if b.Dossier.Status != models.Valid {
-				return common.ErrConflict
+				return l.reviewConflict(ctx, b.Dossier, in, "dossier_not_ready", 0)
 			}
+			invalidFields := 0
 			for _, f := range b.Fields {
 				if f.Required && (f.Value == "" || f.Validation != "VALID") {
-					return common.ErrConflict
+					invalidFields++
 				}
 			}
+			if invalidFields > 0 {
+				return l.reviewConflict(ctx, b.Dossier, in, "invalid_required_fields", invalidFields)
+			}
 			for _, i := range b.Issues {
-				if i.Status == "PENDING_DOCUMENTS" || i.Status == "OPEN" && (i.Severity == "WARNING" || i.Severity == "BLOCKER") {
-					return common.ErrConflict
+				if i.Status == "PENDING_DOCUMENTS" {
+					return l.reviewConflict(ctx, b.Dossier, in, "pending_documents", 0)
+				}
+				if i.Status == "OPEN" && (i.Severity == "WARNING" || i.Severity == "BLOCKER") {
+					return l.reviewConflict(ctx, b.Dossier, in, "unresolved_issues", 0)
 				}
 			}
 			status = models.Approved
@@ -66,7 +76,7 @@ func (l *DossierLogic) Review(ctx context.Context, id uuid.UUID, in dto.ReviewRe
 			status = models.Invalid
 		case "REJECT":
 			if b.Dossier.Status == models.Processing {
-				return common.ErrConflict
+				return l.reviewConflict(ctx, b.Dossier, in, "processing_in_progress", 0)
 			}
 		}
 		snapshot, err := json.Marshal(b)
@@ -88,6 +98,16 @@ func (l *DossierLogic) Review(ctx context.Context, id uuid.UUID, in dto.ReviewRe
 	})
 	return decision, repositories.Error(err)
 }
+
+func (l *DossierLogic) reviewConflict(ctx context.Context, dossier models.Dossier, in dto.ReviewRequest, reason string, invalidFields int) error {
+	l.log.Warn().Str("request_id", common.RequestIDFromContext(ctx)).
+		Str("dossier_id", dossier.ID.String()).Str("decision_action", in.Action).
+		Str("reason", reason).Str("dossier_status", dossier.Status).
+		Uint64("expected_version", in.ExpectedVersion).Uint64("current_version", dossier.Version).
+		Int("invalid_required_fields", invalidFields).Msg("dossier decision rejected")
+	return common.ErrConflict
+}
+
 func (l *DossierLogic) Reopen(ctx context.Context, id uuid.UUID, in dto.ReasonRequest) error {
 	a, err := actor(ctx, "dossier:reopen")
 	if err != nil {

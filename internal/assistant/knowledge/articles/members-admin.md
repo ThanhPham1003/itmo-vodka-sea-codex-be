@@ -1,9 +1,9 @@
-{"id":"members-admin","version":"2026-10-31.v1","aliases":["thành viên","admin cuối","members","invite","invitation"],"pages":["members"],"sources":["internal/auth/logic"],"revision":"1a3ee150f43d1f01f60d16d0484e79b66dd92021","translations":{"vi":{"title":"Quản lý thành viên"},"en":{"title":"Managing members"}}}
+{"id":"members-admin","version":"2026-10-31.v2","aliases":["thành viên","admin cuối","members","invite","invitation"],"pages":["members"],"sources":["internal/auth/logic"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Quản lý thành viên"},"en":{"title":"Managing members"}}}
 
 ## vi
 
-Quản trị công ty vào Thành viên để thêm tài khoản, chọn vai trò, cập nhật quyền hoặc trạng thái. Không được vô hiệu hóa hay hạ vai trò quản trị đang hoạt động cuối cùng. Tạo tài khoản không có nghĩa đã gửi email mời hoặc email đặt lại mật khẩu.
+Quản trị công ty mở Thành viên để thêm tài khoản, chọn vai trò, điều chỉnh quyền hoặc tạm ngưng tài khoản. Công ty phải luôn còn ít nhất một quản trị viên đang hoạt động. Việc tạo tài khoản chưa có nghĩa hệ thống đã gửi email mời hoặc email đặt lại mật khẩu.
 
 ## en
 
-Company administrators use Members to create accounts, choose roles, update permissions or deactivate members. The last active administrator cannot be deactivated or demoted. Account creation does not imply an invitation or password reset email was sent.
+The company administrator opens Members to add accounts, choose roles, adjust access or suspend an account. A company must retain at least one active administrator. Creating an account does not mean an invitation or password reset email has been sent.

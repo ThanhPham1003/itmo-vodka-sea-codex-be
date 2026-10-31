@@ -72,6 +72,25 @@ Gợi ý loại tài liệu dùng `response_format.type=json_schema` với `stri
 
 Gợi ý loại hồ sơ cũng dùng schema nghiêm ngặt, với `document_type` giới hạn trong danh sách tài liệu active của công ty đang chọn. AI chỉ đề xuất tên, mô tả và các yêu cầu tài liệu; backend gán thứ tự, mã định danh và pin phiên bản hiện hành từ catalog (không dùng cứng phiên bản 1). Draft trả về vẫn có `definition.documents[].schema_version`, mã rỗng và `rules: []`; gợi ý không tự lưu hoặc kích hoạt. Không chấp nhận loại tài liệu ngoài danh sách đã chọn, cặp loại tài liệu/role trùng, hoặc điều kiện không có lý do.
 
+## Kiểm tra 409 khi ghi quyết định kiểm duyệt
+
+Backend ghi event `dossier decision rejected` với `request_id`, `dossier_id`,
+`decision_action`, `reason`, `dossier_status`, `expected_version`,
+`current_version` và số `invalid_required_fields`:
+
+```bash
+docker logs --since 10m <container-id> 2>&1 | grep 'dossier decision rejected'
+```
+
+- `version_mismatch`: request dùng phiên bản cũ; tải lại hồ sơ và xem lại trước khi quyết định, không tự gửi lại mutation.
+- `invalid_required_fields`: còn trường bắt buộc trống hoặc `validation` khác `VALID`. Xác nhận cảnh báo không thay thế việc bổ sung/sửa dữ liệu; mở tab Tài liệu, kiểm tra bản gốc và lưu điều chỉnh kèm lý do.
+- `dossier_not_ready`, `pending_documents`, `unresolved_issues`: chưa đạt điều kiện trạng thái/tài liệu/đối soát.
+- `dossier_locked`, `processing_in_progress`: hồ sơ đã kết thúc hoặc đang xử lý nên không cho phép quyết định tương ứng.
+
+Không suy ra xung đột phiên bản chỉ từ HTTP 409. Nếu `expected_version` và
+`current_version` bằng nhau, kiểm tra `reason` và các điều kiện nghiệp vụ.
+Log không chứa giá trị trường trích xuất hay nội dung ý kiến kiểm duyệt.
+
 ## Thiết lập GitHub và Docker Hub
 
 1. Tạo repository trên Docker Hub, mặc định tên `sea-codex-server` trong namespace của tài khoản đăng nhập.

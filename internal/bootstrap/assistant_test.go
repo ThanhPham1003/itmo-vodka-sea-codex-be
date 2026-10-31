@@ -49,7 +49,8 @@ func TestAssistantProtectedContractAndNoBusinessWrites(t *testing.T) {
 	assert.True(t, ctx.Enabled)
 	assert.Len(t, ctx.Articles, 18)
 	article := data[ad.ArticleResponse](t, request(t, router, "GET", "/api/v1/assistant/articles/review-readiness?locale=en", token, nil), 200)
-	assert.Contains(t, article.Content, "VALID_DOCUMENT")
+	assert.Contains(t, article.Content, "Awaiting review")
+	assert.NotContains(t, article.Content, "VALID_DOCUMENT")
 	assert.Equal(t, 404, request(t, router, "GET", "/api/v1/assistant/articles/not-found", token, nil).Code)
 	for _, query := range []string{"locale=xx", "locale=en&locale=vi", "company_id=other", "page=untrusted"} {
 		assert.Equal(t, 400, request(t, router, "GET", "/api/v1/assistant/context?"+query, token, nil).Code)

@@ -27,9 +27,17 @@ Knowledge được nhúng trong binary bằng `go:embed`. Mỗi bài Markdown c�
 
 Retrieval chuẩn hóa VI có/không dấu và EN, ranking theo độ hiếm từ, alias và page hint; lấy tối đa 5 bài, tổng content VI+EN không quá 16.000 Unicode code points. Follow-up ngắn dùng lượt user gần nhất để bổ sung truy vấn; lịch sử không bao giờ là nguồn nghiệp vụ. Chưa dùng vector database/fine-tuning.
 
-Model nhận developer policy riêng và user payload JSON gồm câu hỏi, lịch sử giới hạn, locale, page enum, role/permissions và các bài liên quan. Không tự gửi company ID, user ID, email, dossier ID hoặc nội dung trang. Nếu chính người dùng nhập ID/PII vào câu hỏi, văn bản đó vẫn thuộc input của họ; không tuyên bố tự động loại bỏ mọi PII.
+Model nhận developer policy riêng và user payload JSON gồm câu hỏi, lịch sử giới hạn, locale, page enum, nhãn vai trò/quyền thao tác bằng ngôn ngữ người dùng và các bài liên quan. Không gửi mã vai trò hoặc permission key trong phần quyền truy cập. Không tự gửi company ID, user ID, email, dossier ID hoặc nội dung trang. Nếu chính người dùng nhập ID/PII vào câu hỏi, văn bản đó vẫn thuộc input của họ; không tuyên bố tự động loại bỏ mọi PII.
 
 Server chỉ chấp nhận response có `status` và `blocks`. Mỗi block kiến thức phải trích ID đã retrieve. Title, excerpt và article path được server tạo từ corpus. Các trạng thái từ chối/không đủ thông tin được chuyển thành thông báo cố định VI/EN. ID nguồn đúng không tự chứng minh nội dung đúng; cần nghiệm thu model thật theo [test cases](system-assistant-acceptance-cases.md).
+
+### Ngôn ngữ trả lời cho người dùng
+
+Corpus v2 và câu trả lời mẫu VI/EN dùng tên trên giao diện, không đưa mã trạng thái, tên biến/trường, permission key hay mã vai trò vào lời hướng dẫn. Câu hỏi đơn giản được trả lời trực tiếp bằng vài câu; chỉ liệt kê các bước hoặc điều kiện chi tiết khi cần. Model được nhắc rõ rằng người hỏi là người sử dụng nghiệp vụ.
+
+Sau khi kiểm tra nguồn, BE chuẩn hóa các identifier quen thuộc còn sót trong text thành nhãn dễ hiểu, không thay JSON keys hoặc citation IDs. Nếu model đưa identifier không nhận diện được hoặc đường dẫn nội bộ vào lời trả lời, BE dùng thông báo không đủ thông tin thay vì phát hành nội dung kỹ thuật đó. Đây là kiểm tra mẫu identifier, không phải bảo đảm mọi thuật ngữ khó hiểu đều được phát hiện; vẫn cần đánh giá cách diễn đạt trên model thật. Không gọi thêm lượt AI để sửa văn phong.
+
+Ví dụ câu hỏi “Chờ kiểm duyệt có phải đã duyệt?” nên được trả lời: “Chưa. Chờ kiểm duyệt nghĩa là hồ sơ đang chờ người phụ trách kiểm tra và quyết định. Chỉ khi quyết định phê duyệt được ghi nhận, hồ sơ mới chuyển sang Đã phê duyệt.”
 
 ## API
 

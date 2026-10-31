@@ -1,9 +1,9 @@
-{"id":"getting-started","version":"2026-10-31.v1","aliases":["quy trình","bắt đầu","workflow","getting started"],"pages":["dashboard"],"sources":["internal/dossier/logic/review.go"],"revision":"1a3ee150f43d1f01f60d16d0484e79b66dd92021","translations":{"vi":{"title":"Quy trình tổng thể"},"en":{"title":"Overall workflow"}}}
+{"id":"getting-started","version":"2026-10-31.v2","aliases":["quy trình","bắt đầu","workflow","getting started"],"pages":["dashboard"],"sources":["internal/dossier/logic/review.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Quy trình tổng thể"},"en":{"title":"Overall workflow"}}}
 
 ## vi
 
-Quản trị cấu hình loại giấy tờ, trường trích xuất và loại bộ hồ sơ. Người có quyền tạo hồ sơ, nhận giấy tờ theo nhiều đợt. Hệ thống phân loại, trích xuất và đối soát khi đủ nguồn phù hợp. Chuyên viên kiểm tra, xử lý vấn đề và ghi quyết định. Đã phê duyệt tại DocSense chưa đồng nghĩa đã đồng bộ sang hệ thống nghiệp vụ khác.
+Quản trị công ty thiết lập các loại giấy tờ và thông tin cần đọc cho từng bộ hồ sơ. Người phụ trách tạo hồ sơ và bổ sung giấy tờ theo từng đợt. Hệ thống đọc thông tin, phân loại và so sánh các giấy tờ liên quan khi đã đủ dữ liệu. Chuyên viên kiểm tra các điểm cần xử lý rồi ghi nhận quyết định. Hồ sơ được phê duyệt tại đây chưa đồng nghĩa đã chuyển sang hệ thống nghiệp vụ khác.
 
 ## en
 
-Administrators configure document types, fields and dossier requirements. Authorized users create dossiers and receive documents in multiple batches. Processing classifies, extracts and reconciles sufficient related evidence. A human reviewer inspects issues and records a decision. Approval does not imply automatic synchronization with another business system.
+The company administrator sets up document types and the information needed for each dossier. The responsible person creates a dossier and adds documents in batches. The system reads, organizes and compares related documents when enough information is available. A specialist checks any issues and records a decision. Approval here does not mean the dossier has been transferred to another business system.
