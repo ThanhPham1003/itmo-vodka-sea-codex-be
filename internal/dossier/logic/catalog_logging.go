@@ -26,6 +26,13 @@ func (l *CatalogLogic) logSuggestionFailure(ctx context.Context, operation, stag
 	if stage == "decode" {
 		addDecodeDiagnostics(event, err)
 	}
+	var validation *catalogValidationError
+	if errors.As(err, &validation) {
+		event.Str("validation_error", validation.Rule).Str("json_field", validation.Field)
+		if validation.Index >= 0 {
+			event.Int("item_index", validation.Index)
+		}
+	}
 	var failure *ai.Failure
 	if errors.As(err, &failure) {
 		reason = failure.Reason

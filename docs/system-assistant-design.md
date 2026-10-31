@@ -86,9 +86,22 @@ ASSISTANT_RATE_WINDOW=1m
 ASSISTANT_MAX_CONCURRENT_REQUESTS=4
 ```
 
-API key không đưa vào frontend, Dockerfile hoặc source. Bật AI yêu cầu key/model và OpenAI HTTPS endpoint hợp lệ. Không tự chọn/thay model OCR hoặc dùng ngầm key `PROCESSING_API_KEY`.
+API key không đưa vào frontend, Dockerfile hoặc source. Bật AI yêu cầu key/model và OpenAI HTTPS endpoint hợp lệ. Overlay Compose hỗ trợ dùng chung với OCR OpenAI: nếu `ASSISTANT_API_KEY`/`ASSISTANT_MODEL` trống hoặc chưa đặt, lấy tương ứng `PROCESSING_API_KEY`/`PROCESSING_MODEL`. Giá trị assistant riêng có ưu tiên cao hơn. `ASSISTANT_ENABLED` vẫn phải bật riêng; không cần bật worker OCR chỉ để dùng chatbot.
 
-Repo này không có file Compose production của VM. Có overlay [compose.assistant.yaml](../config/compose.assistant.yaml) cho service `api` trong Compose người dùng đã cung cấp. Sau khi build/publish image BE/FE mới và copy overlay lên VM, thêm các biến trên vào `.env` của Compose rồi dùng:
+Để dùng chung, giữ key/model OCR đang có trong `.env`, đặt `ASSISTANT_ENABLED=true` và để trống hoặc bỏ hai biến assistant key/model. Nếu chỉnh trực tiếp Compose trên VM, thêm vào `api.environment`:
+
+```yaml
+      - ASSISTANT_ENABLED=${ASSISTANT_ENABLED:-false}
+      - ASSISTANT_API_KEY=${ASSISTANT_API_KEY:-${PROCESSING_API_KEY:-}}
+      - ASSISTANT_MODEL=${ASSISTANT_MODEL:-${PROCESSING_MODEL:-}}
+      - ASSISTANT_BASE_URL=${ASSISTANT_BASE_URL:-https://api.openai.com}
+```
+
+Fallback này được thực hiện khi Compose nội suy biến từ shell/`.env`, không phải fallback trong Go config. Chạy bằng `docker run` hoặc ngoài Compose cần truyền key/model vào `ASSISTANT_*` rõ ràng. Model dùng chung cần hỗ trợ Chat Completions JSON của OpenAI; các giới hạn và cờ bật/tắt assistant vẫn độc lập.
+
+Repo có [docker-compose.yml](../docker-compose.yml) theo Compose VM người dùng cung cấp: frontend cổng 80, database mặc định `sea_codex_db_v2`, và truyền `ASSISTANT_*` với fallback OCR vào service `api`. Khi dùng file này, chỉ cần đặt `ASSISTANT_ENABLED=true` trong `.env`, giữ key/model OCR hợp lệ rồi chạy `docker compose config --quiet` và `docker compose up -d --no-deps --force-recreate api`. Sau đó tải lại trang/đăng nhập lại để FE lấy context mới. Thêm biến vào `.env` mà Compose không tham chiếu thì biến không được truyền vào container.
+
+Nếu giữ một bản Compose khác chưa có các biến assistant, có thể dùng overlay [compose.assistant.yaml](../config/compose.assistant.yaml) thay vì chèn thủ công. Sau khi build/publish image BE/FE mới và copy overlay lên VM, thêm các biến trên vào `.env` của Compose rồi dùng:
 
 ```bash
 docker compose -f docker-compose.yml -f config/compose.assistant.yaml config --quiet
@@ -97,4 +110,4 @@ docker compose -f docker-compose.yml -f config/compose.assistant.yaml up -d --no
 docker compose -f docker-compose.yml -f config/compose.assistant.yaml logs --tail 50 api
 ```
 
-Từ đó luôn dùng cả hai file để giữ cấu hình overlay. Nếu image/tag VM chưa chứa thay đổi branch này, pull latest không tự có chatbot. Không cần đổi database hay xóa volume. Muốn tắt chỉ đặt `ASSISTANT_ENABLED=false` và recreate api; thư viện bài vẫn hoạt động.
+Với cách dùng overlay, luôn dùng cả hai file để giữ cấu hình. Bản `docker-compose.yml` mới đã tích hợp assistant nên không cần overlay. Nếu image/tag VM chưa chứa thay đổi branch này, pull latest không tự có chatbot. Không cần đổi database hay xóa volume. Muốn tắt chỉ đặt `ASSISTANT_ENABLED=false` và recreate api; thư viện bài vẫn hoạt động.
