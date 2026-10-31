@@ -1,4 +1,4 @@
-{"id":"members-admin","version":"2026-10-31.v2","aliases":["thành viên","admin cuối","members","invite","invitation"],"pages":["members"],"sources":["internal/auth/logic"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Quản lý thành viên"},"en":{"title":"Managing members"}}}
+{"id":"members-admin","version":"2026-10-31.v3","aliases":["thành viên","admin cuối","members","invite","invitation"],"pages":["members"],"sources":["internal/auth/logic"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Quản lý thành viên"},"en":{"title":"Managing members"}}}
 
 ## vi
 

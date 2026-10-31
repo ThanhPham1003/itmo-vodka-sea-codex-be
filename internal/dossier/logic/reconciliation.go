@@ -243,7 +243,7 @@ func (l *DossierLogic) reconcile(ctx context.Context, r *repositories.DossierRep
 		}
 	}
 	for _, f := range b.Fields {
-		if (f.Required && f.Validation != "VALID") || (f.Value != "" && !trusted(f)) {
+		if requiredFieldNeedsReview(f) || (f.Value != "" && !trusted(f)) {
 			issues = append(issues, models.Issue{RuleCode: "field:" + f.ID.String(), Code: "FIELD_NEEDS_VERIFICATION", Severity: "WARNING", Status: "OPEN", Message: "Cần xác minh trường: " + f.Label, Remediation: "Kiểm tra bản gốc và sửa dữ liệu kèm lý do nếu cần.", Evidence: []models.Evidence{evidence(f)}})
 		}
 	}

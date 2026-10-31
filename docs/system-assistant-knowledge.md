@@ -1,6 +1,6 @@
 # Bảo trì kho hướng dẫn DocSense
 
-Corpus v2 gồm 18 bài VI/EN tại `internal/assistant/knowledge/articles/`, version `2026-10-31.v2`. Mỗi bài ghi source và revision kiểm chứng. Chỉ đưa kiến thức chung đã đối chiếu source; không thêm `.env`, token, log, company/dossier data hoặc tài liệu upload. Nội dung bài phải dùng ngôn ngữ người sử dụng và tên trên giao diện; mã trạng thái/quyền hoặc alias kỹ thuật chỉ được giữ trong metadata phục vụ retrieval, không đưa vào phần `vi`/`en`.
+Corpus v3 gồm 18 bài VI/EN tại `internal/assistant/knowledge/articles/`, version `2026-10-31.v3`. Mỗi bài ghi source và revision kiểm chứng. Chỉ đưa kiến thức chung đã đối chiếu source; không thêm `.env`, token, log, company/dossier data hoặc tài liệu upload. Nội dung bài phải dùng ngôn ngữ người sử dụng và tên trên giao diện; mã trạng thái/quyền hoặc alias kỹ thuật chỉ được giữ trong metadata phục vụ retrieval, không đưa vào phần `vi`/`en`.
 
 | ID | Chủ đề |
 | --- | --- |

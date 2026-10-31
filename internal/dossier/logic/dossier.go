@@ -118,6 +118,9 @@ func (l *DossierLogic) List(ctx context.Context, f dto.DossierFilter, review boo
 		}
 	}
 	out, err := l.repo.Scope(a.CompanyID).List(ctx, a, f)
+	if err == nil {
+		err = l.repo.Scope(a.CompanyID).ResolvePeople(ctx, out.Items, nil)
+	}
 	return out, repositories.Error(err)
 }
 func (l *DossierLogic) Detail(ctx context.Context, id uuid.UUID) (dto.Detail, error) {
@@ -132,6 +135,11 @@ func (l *DossierLogic) Detail(ctx context.Context, id uuid.UUID) (dto.Detail, er
 	if !canRead(a, b.Dossier) {
 		return dto.Detail{}, common.ErrNotFound
 	}
+	people := []models.Dossier{b.Dossier}
+	if err = l.repo.Scope(a.CompanyID).ResolvePeople(ctx, people, b.Decisions); err != nil {
+		return dto.Detail{}, repositories.Error(err)
+	}
+	b.Dossier = people[0]
 	return redacted(b), nil
 }
 func (l *DossierLogic) mutate(ctx context.Context, id uuid.UUID, permission string, version uint64, action string, metadata map[string]any, fn func(*repositories.DossierRepository, *repositories.Bundle, common.Actor) error) error {

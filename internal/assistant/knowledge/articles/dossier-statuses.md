@@ -1,4 +1,4 @@
-{"id":"dossier-statuses","version":"2026-10-31.v2","aliases":["trạng thái","chờ kiểm duyệt","status","statuses","VALID_DOCUMENT","APPROVED_DOCUMENT"],"pages":["detail","review","dossiers"],"sources":["internal/dossier/models/dossier.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Ý nghĩa trạng thái hồ sơ"},"en":{"title":"Dossier statuses"}}}
+{"id":"dossier-statuses","version":"2026-10-31.v3","aliases":["trạng thái","chờ kiểm duyệt","status","statuses","VALID_DOCUMENT","APPROVED_DOCUMENT"],"pages":["detail","review","dossiers"],"sources":["internal/dossier/models/dossier.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Ý nghĩa trạng thái hồ sơ"},"en":{"title":"Dossier statuses"}}}
 
 ## vi
 

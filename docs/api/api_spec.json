@@ -241,6 +241,9 @@
             ],
             "nullable": true
           },
+          "dossier_title": {
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -255,6 +258,9 @@
           },
           "resource_id": {
             "format": "uuid",
+            "type": "string"
+          },
+          "resource_name": {
             "type": "string"
           }
         },
@@ -739,6 +745,9 @@
             "format": "uuid",
             "type": "string"
           },
+          "actor_name": {
+            "type": "string"
+          },
           "company_id": {
             "format": "uuid",
             "type": "string"
@@ -981,6 +990,9 @@
             ],
             "nullable": true
           },
+          "assignee_name": {
+            "type": "string"
+          },
           "change_request": {
             "type": "string"
           },
@@ -997,6 +1009,9 @@
           },
           "creator_id": {
             "format": "uuid",
+            "type": "string"
+          },
+          "creator_name": {
             "type": "string"
           },
           "dossier_type": {
@@ -1105,6 +1120,13 @@
           "definition": {
             "$ref": "#/components/schemas/DossierDossierDefinition"
           },
+          "document_schemas": {
+            "items": {
+              "$ref": "#/components/schemas/DossierPinnedDocument"
+            },
+            "nullable": true,
+            "type": "array"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -1155,6 +1177,25 @@
         "required": [
           "name",
           "documents"
+        ],
+        "type": "object"
+      },
+      "DossierDraftRuleSuggestionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/DossierDossierDefinition",
+            "nullable": false
+          },
+          "description": {
+            "maxLength": 4000,
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "definition"
         ],
         "type": "object"
       },
@@ -4663,6 +4704,153 @@
         "x-permission": "company_admin"
       }
     },
+    "/api/v1/dossier-types/comparison-rules/suggestions": {
+      "post": {
+        "description": "Accepts description and definition (name, description, documents, optional rules). Requirement keys and rule codes must be empty. Document schema_version=0 resolves the current version; explicit versions are pinned. Admin only; validates active tenant-owned documents, roles, conditions and field types. Returns unsaved rules without configuration_version; does not create a type or version. Save selected rules explicitly with POST /dossier-types. No dossier PII is sent.",
+        "operationId": "suggestDraftRules",
+        "parameters": [
+          {
+            "description": "Optional request correlation ID",
+            "in": "header",
+            "name": "X-Request-ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DossierDraftRuleSuggestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "properties": {
+                        "draft": {
+                          "enum": [
+                            true
+                          ],
+                          "type": "boolean"
+                        },
+                        "rules": {
+                          "items": {
+                            "$ref": "#/components/schemas/DossierComparisonRule"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "draft",
+                        "rules"
+                      ],
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing, invalid or inactive credentials"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Resource absent or inaccessible"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Stale version or business conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Database, storage or AI unavailable"
+          }
+        },
+        "security": [
+          {
+            "PasetoBearer": []
+          }
+        ],
+        "summary": "Suggest comparison rules for an unsaved dossier type",
+        "x-permission": "company_admin"
+      }
+    },
     "/api/v1/dossier-types/suggestions": {
       "post": {
         "description": "Sends configuration only to the configured AI provider. Returns an unsaved draft; admin edits and POSTs it explicitly. Never activates AI suggestions.",
@@ -6173,7 +6361,7 @@
     },
     "/api/v1/dossiers/{id}/decisions": {
       "post": {
-        "description": "Requires assignment unless company_admin. APPROVE needs VALID_DOCUMENT, no processing/missing documents, no pending/open warning/blocker and valid required fields. REJECT/REQUEST_CHANGES require reason. Stores private decision snapshot atomically with audit/status history.",
+        "description": "Requires assignment unless company_admin. APPROVE needs VALID_DOCUMENT, no processing/missing documents, no pending/open warning/blocker. Required fields must be valid or their own unchanged FIELD_NEEDS_VERIFICATION warning must have been acknowledged by a reviewer with a reason. Unrelated acknowledgements never substitute; changed evidence requires a new acknowledgement. Accepted field IDs are recorded as accepted_required_fields in approval audit metadata, with original values and acknowledgements preserved in the private decision snapshot. REJECT/REQUEST_CHANGES require reason. Stores private decision snapshot atomically with audit/status history.",
         "operationId": "reviewDossier",
         "parameters": [
           {

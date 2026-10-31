@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"gorm.io/gorm"
 	"sea-codex-server/internal/common"
 	"sea-codex-server/internal/dossier/dto"
 	"sea-codex-server/internal/dossier/models"
@@ -208,6 +210,9 @@ func (l *CatalogLogic) ListDossierTypes(ctx context.Context, p common.Page) (com
 		return common.List[models.DossierType]{}, err
 	}
 	out, err := l.repo.Scope(a.CompanyID).DossierTypes(ctx, p)
+	if err == nil {
+		err = l.repo.Scope(a.CompanyID).ResolveCatalogSchemas(ctx, out.Items)
+	}
 	return out, repositories.Error(err)
 }
 func (l *CatalogLogic) GetDossierType(ctx context.Context, c string) (models.DossierType, error) {
@@ -216,6 +221,11 @@ func (l *CatalogLogic) GetDossierType(ctx context.Context, c string) (models.Dos
 		return models.DossierType{}, err
 	}
 	out, err := l.repo.Scope(a.CompanyID).DossierType(ctx, c, false)
+	if err == nil {
+		items := []models.DossierType{out}
+		err = l.repo.Scope(a.CompanyID).ResolveCatalogSchemas(ctx, items)
+		out = items[0]
+	}
 	return out, repositories.Error(err)
 }
 func lookupField(def models.DocumentDefinition, key string) (models.FieldSchema, bool) {
@@ -326,6 +336,9 @@ func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.Doss
 			return nil, invalidCatalogDefinition("missing_trigger_reason", "documents.trigger_reason", i)
 		}
 		doc, err := r.DocumentType(ctx, req.DocumentType, false)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repositories.Error(err)
+		}
 		if err != nil || !doc.Active {
 			return nil, invalidCatalogDefinition("document_type_unavailable", "documents.document_type", i)
 		}
@@ -333,6 +346,9 @@ func (l *CatalogLogic) validateDossier(ctx context.Context, r *repositories.Doss
 			req.SchemaVersion = doc.CurrentVersion
 		}
 		v, err := r.DocumentVersion(ctx, doc.ID, req.SchemaVersion)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repositories.Error(err)
+		}
 		if err != nil {
 			return nil, invalidCatalogDefinition("schema_version_unavailable", "documents.schema_version", i)
 		}
@@ -566,9 +582,14 @@ func (l *CatalogLogic) SuggestRules(ctx context.Context, c, description string) 
 		}
 		docs[doc.Code] = v.Definition
 	}
-	config, _ := json.Marshal(map[string]any{"definition": d.Definition, "document_schemas": docs, "description": description})
+	return l.suggestRulesForDefinition(ctx, a, r, d.Definition, docs, d.ID, d.CurrentVersion, description)
+}
+
+func (l *CatalogLogic) suggestRulesForDefinition(ctx context.Context, a common.Actor, r *repositories.DossierRepository, definition models.DossierDefinition, docs map[string]models.DocumentDefinition, resourceID uuid.UUID, version int, description string) (json.RawMessage, error) {
+	var err error
+	config, _ := json.Marshal(map[string]any{"definition": definition, "document_schemas": docs, "description": description})
 	prompt := comparisonSuggestionPrompt + string(config)
-	schema := comparisonSuggestionSchema(d.Definition.Documents, docs)
+	schema := comparisonSuggestionSchema(definition.Documents, docs)
 	var raw json.RawMessage
 	if client, ok := l.ai.(ai.StructuredClient); ok {
 		raw, err = client.CompleteJSON(ctx, prompt, nil, schema)
@@ -594,21 +615,25 @@ func (l *CatalogLogic) SuggestRules(ctx context.Context, c, description string) 
 	}
 	// Validate drafts with the same rules as PUT, including configured roles,
 	// text limits and pinned field types. Work on a copy; suggestions never save.
-	candidate := d.Definition
-	candidate.Documents = append([]models.DocumentRequirement(nil), d.Definition.Documents...)
+	candidate := definition
+	candidate.Documents = append([]models.DocumentRequirement(nil), definition.Documents...)
 	candidate.Rules = out.Rules
-	if _, err = l.validateDossier(ctx, r, &candidate, &d.Definition); err != nil {
+	if _, err = l.validateDossier(ctx, r, &candidate, &definition); err != nil {
 		l.logSuggestionFailure(ctx, "comparison_rules", "validation", err)
 		return nil, common.ErrUnavailable
 	}
 	for i := range out.Rules {
 		out.Rules[i].Code = ""
 	}
-	if err = l.audit.Write(ctx, nil, common.AuditEvent{CompanyID: a.CompanyID, ActorID: a.UserID, Action: "COMPARISON_RULES_SUGGESTED", Resource: "dossier_type", ResourceID: d.ID, Metadata: map[string]any{"version": d.CurrentVersion}}); err != nil {
+	if err = l.audit.Write(ctx, nil, common.AuditEvent{CompanyID: a.CompanyID, ActorID: a.UserID, Action: "COMPARISON_RULES_SUGGESTED", Resource: "dossier_type", ResourceID: resourceID, Metadata: map[string]any{"version": version, "draft": version == 0}}); err != nil {
 		l.logSuggestionFailure(ctx, "comparison_rules", "audit", err)
 		return nil, repositories.Error(err)
 	}
-	return json.Marshal(map[string]any{"draft": true, "rules": out.Rules, "configuration_version": d.CurrentVersion})
+	response := map[string]any{"draft": true, "rules": out.Rules}
+	if version > 0 {
+		response["configuration_version"] = version
+	}
+	return json.Marshal(response)
 }
 
 func configuredReference(requirements []models.DocumentRequirement, typ, role string) bool {

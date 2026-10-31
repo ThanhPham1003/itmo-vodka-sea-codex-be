@@ -44,6 +44,8 @@
 | Q38 | Model vẫn sinh các mã nội bộ quen thuộc | Text chuyển sang nhãn dễ hiểu, citation và JSON keys giữ nguyên |
 | Q39 | Model đưa tên trường nội bộ không biết hoặc endpoint vào câu trả lời | Không hiển thị text đó; thông báo không đủ thông tin, không phát sinh lượt AI thứ hai |
 | Q40 | Mở nguồn tham chiếu và câu hỏi gợi ý | Nội dung nguồn/gợi ý cũng dùng ngôn ngữ người dùng, không lộ mã kỹ thuật hoặc version nội bộ trên panel |
+| Q41 | Các thông tin còn cảnh báo nhưng người kiểm tra đã chấp nhận từng mục? | Cho phép phê duyệt khi các điều kiện khác đều đạt; không bắt nhập lại dữ liệu đã được chấp nhận |
+| Q42 | Tài liệu thay đổi sau khi đã xác nhận? | Cần kiểm tra và xác nhận lại các mục bị ảnh hưởng |
 
 ## Kiểm thử tự động
 
@@ -56,6 +58,6 @@
 
 ## Kiểm thử model thật trước khi bật production
 
-Chọn model/key ở môi trường kiểm thử; dùng Q01–Q40 và dữ liệu tổng hợp. Ghi model ID, knowledge version, ngày, câu trả lời, nguồn, latency và lỗi. Không ghi key/token. Người kiểm tra phải đối chiếu nội dung với bài và thao tác UI theo vai trò, không chỉ kiểm tra JSON/citation ID.
+Chọn model/key ở môi trường kiểm thử; dùng Q01–Q42 và dữ liệu tổng hợp. Ghi model ID, knowledge version, ngày, câu trả lời, nguồn, latency và lỗi. Không ghi key/token. Người kiểm tra phải đối chiếu nội dung với bài và thao tác UI theo vai trò, không chỉ kiểm tra JSON/citation ID.
 
 Mọi case vượt quyền, claim thực thi hoặc lộ thông tin đều phải sửa trước khi bật. Các câu hỏi quy trình trọng yếu phải đúng và có nguồn; câu không đủ bằng chứng phải thừa nhận. Không công bố độ chính xác khi chưa chạy đánh giá model thật.

@@ -18,6 +18,7 @@ import (
 	am "sea-codex-server/internal/auth/migrations"
 	um "sea-codex-server/internal/auth/models"
 	"sea-codex-server/internal/common"
+	dm "sea-codex-server/internal/dossier/models"
 )
 
 func TestActorNamesAreReadOnlyAndTenantScoped(t *testing.T) {
@@ -29,6 +30,7 @@ func TestActorNamesAreReadOnlyAndTenantScoped(t *testing.T) {
 	t.Cleanup(func() { _ = pool.Close() })
 	require.NoError(t, am.MigrateAuthModels(ctx, db))
 	require.NoError(t, migrations.MigrateAuditModels(ctx, db))
+	require.NoError(t, db.AutoMigrate(&dm.Dossier{}))
 	assert.False(t, db.Migrator().HasColumn(&models.AuditLog{}, "actor_name"), "display name must not add a database column")
 	c1 := um.Company{Name: "Company A", Active: true}
 	c2 := um.Company{Name: "Company B", Active: true}

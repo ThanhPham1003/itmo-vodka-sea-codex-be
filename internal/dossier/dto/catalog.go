@@ -15,3 +15,8 @@ type DossierTypeRequest struct {
 type SuggestionRequest struct {
 	Description string `json:"description" binding:"required,max=4000"`
 }
+
+type DraftRuleSuggestionRequest struct {
+	Description string                   `json:"description" binding:"required,max=4000"`
+	Definition  models.DossierDefinition `json:"definition" binding:"required"`
+}

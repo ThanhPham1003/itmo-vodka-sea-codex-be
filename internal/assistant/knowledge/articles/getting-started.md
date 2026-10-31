@@ -1,4 +1,4 @@
-{"id":"getting-started","version":"2026-10-31.v2","aliases":["quy trình","bắt đầu","workflow","getting started"],"pages":["dashboard"],"sources":["internal/dossier/logic/review.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Quy trình tổng thể"},"en":{"title":"Overall workflow"}}}
+{"id":"getting-started","version":"2026-10-31.v3","aliases":["quy trình","bắt đầu","workflow","getting started"],"pages":["dashboard"],"sources":["internal/dossier/logic/review.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Quy trình tổng thể"},"en":{"title":"Overall workflow"}}}
 
 ## vi
 

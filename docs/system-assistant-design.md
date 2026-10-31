@@ -33,7 +33,7 @@ Server chỉ chấp nhận response có `status` và `blocks`. Mỗi block kiế
 
 ### Ngôn ngữ trả lời cho người dùng
 
-Corpus v2 và câu trả lời mẫu VI/EN dùng tên trên giao diện, không đưa mã trạng thái, tên biến/trường, permission key hay mã vai trò vào lời hướng dẫn. Câu hỏi đơn giản được trả lời trực tiếp bằng vài câu; chỉ liệt kê các bước hoặc điều kiện chi tiết khi cần. Model được nhắc rõ rằng người hỏi là người sử dụng nghiệp vụ.
+Corpus v3 và câu trả lời mẫu VI/EN dùng tên trên giao diện, không đưa mã trạng thái, tên biến/trường, permission key hay mã vai trò vào lời hướng dẫn. Câu hỏi đơn giản được trả lời trực tiếp bằng vài câu; chỉ liệt kê các bước hoặc điều kiện chi tiết khi cần. Model được nhắc rõ rằng người hỏi là người sử dụng nghiệp vụ.
 
 Sau khi kiểm tra nguồn, BE chuẩn hóa các identifier quen thuộc còn sót trong text thành nhãn dễ hiểu, không thay JSON keys hoặc citation IDs. Nếu model đưa identifier không nhận diện được hoặc đường dẫn nội bộ vào lời trả lời, BE dùng thông báo không đủ thông tin thay vì phát hành nội dung kỹ thuật đó. Đây là kiểm tra mẫu identifier, không phải bảo đảm mọi thuật ngữ khó hiểu đều được phát hiện; vẫn cần đánh giá cách diễn đạt trên model thật. Không gọi thêm lượt AI để sửa văn phong.
 

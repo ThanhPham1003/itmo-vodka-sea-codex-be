@@ -27,6 +27,7 @@ func (l *DossierLogic) Review(ctx context.Context, id uuid.UUID, in dto.ReviewRe
 		return models.Decision{}, common.ErrInvalidArgument
 	}
 	var decision models.Decision
+	var acceptedFields []uuid.UUID
 	err = l.repo.Scope(a.CompanyID).Tx(ctx, func(r *repositories.DossierRepository) error {
 		b, err := r.Bundle(ctx, id, true)
 		if err != nil {
@@ -53,12 +54,8 @@ func (l *DossierLogic) Review(ctx context.Context, id uuid.UUID, in dto.ReviewRe
 			if b.Dossier.Status != models.Valid {
 				return l.reviewConflict(ctx, b.Dossier, in, "dossier_not_ready", 0)
 			}
-			invalidFields := 0
-			for _, f := range b.Fields {
-				if f.Required && (f.Value == "" || f.Validation != "VALID") {
-					invalidFields++
-				}
-			}
+			invalidFields, accepted := requiredFieldReview(b)
+			acceptedFields = accepted
 			if invalidFields > 0 {
 				return l.reviewConflict(ctx, b.Dossier, in, "invalid_required_fields", invalidFields)
 			}
@@ -94,7 +91,11 @@ func (l *DossierLogic) Review(ctx context.Context, id uuid.UUID, in dto.ReviewRe
 		if err = r.Save(ctx, &b.Dossier); err != nil {
 			return err
 		}
-		return l.audit.Write(ctx, r.DB(), common.AuditEvent{CompanyID: a.CompanyID, ActorID: a.UserID, Action: "DOSSIER_" + in.Action, Resource: "dossier", ResourceID: id, Metadata: map[string]any{"decision_id": decision.ID, "version": decision.Version}})
+		metadata := map[string]any{"decision_id": decision.ID, "version": decision.Version}
+		if len(acceptedFields) > 0 {
+			metadata["accepted_required_fields"] = acceptedFields
+		}
+		return l.audit.Write(ctx, r.DB(), common.AuditEvent{CompanyID: a.CompanyID, ActorID: a.UserID, Action: "DOSSIER_" + in.Action, Resource: "dossier", ResourceID: id, Metadata: metadata})
 	})
 	return decision, repositories.Error(err)
 }

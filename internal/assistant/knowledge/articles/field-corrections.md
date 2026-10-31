@@ -1,4 +1,4 @@
-{"id":"field-corrections","version":"2026-10-31.v2","aliases":["sửa trường","đọc sai","confidence","trích xuất","correction","extracted fields"],"pages":["detail"],"sources":["internal/dossier/logic/normalization.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Kiểm tra và sửa thông tin đã đọc"},"en":{"title":"Checking and correcting information"}}}
+{"id":"field-corrections","version":"2026-10-31.v3","aliases":["sửa trường","đọc sai","confidence","trích xuất","correction","extracted fields"],"pages":["detail"],"sources":["internal/dossier/logic/normalization.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Kiểm tra và sửa thông tin đã đọc"},"en":{"title":"Checking and correcting information"}}}
 
 ## vi
 

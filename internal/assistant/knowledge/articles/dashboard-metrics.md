@@ -1,4 +1,4 @@
-{"id":"dashboard-metrics","version":"2026-10-31.v2","aliases":["dashboard","thống kê","metrics","unique","transitions","hiện tại"],"pages":["dashboard"],"sources":["internal/dossier/logic/dashboard.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Dashboard và khoảng thời gian"},"en":{"title":"Dashboard metrics"}}}
+{"id":"dashboard-metrics","version":"2026-10-31.v3","aliases":["dashboard","thống kê","metrics","unique","transitions","hiện tại"],"pages":["dashboard"],"sources":["internal/dossier/logic/dashboard.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Dashboard và khoảng thời gian"},"en":{"title":"Dashboard metrics"}}}
 
 ## vi
 

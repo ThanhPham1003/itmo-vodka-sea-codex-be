@@ -15,7 +15,7 @@ import (
 	"sea-codex-server/internal/dossier/models"
 )
 
-func TestApprovalRequiresValidRequiredFieldsAfterWarningAcknowledgement(t *testing.T) {
+func TestApprovalAcceptsRequiredFieldsAfterHumanAcknowledgement(t *testing.T) {
 	app := newTestApp(t)
 	var logs bytes.Buffer
 	app.Logger = zerolog.New(&logs)
@@ -46,20 +46,21 @@ func TestApprovalRequiresValidRequiredFieldsAfterWarningAcknowledgement(t *testi
 	detail := get()
 	require.Equal(t, models.Valid, detail.Dossier.Status)
 	require.Len(t, detail.Issues, 2)
+	logs.Reset()
+	remaining := 2
 	for _, issue := range detail.Issues {
-		require.Equal(t, 200, request(t, router, "POST", base+"/issues/"+issue.ID.String()+"/acknowledge", token, dd.ReasonRequest{ExpectedVersion: detail.Dossier.Version, Reason: "Checked original"}).Code)
+		rejected := request(t, router, "POST", base+"/decisions", token, dd.ReviewRequest{ExpectedVersion: detail.Dossier.Version, Action: "APPROVE", Reason: "private-review-reason"})
+		require.Equal(t, 409, rejected.Code, "each outstanding field must be reviewed")
+		assert.Equal(t, detail.Dossier.Version, get().Dossier.Version)
+		require.Equal(t, 200, request(t, router, "POST", base+"/issues/"+issue.ID.String()+"/acknowledge", token, dd.ReasonRequest{ExpectedVersion: detail.Dossier.Version, Reason: "Checked original and accepted"}).Code)
 		detail = get()
+		remaining--
 	}
+	require.Zero(t, remaining)
 	for _, issue := range detail.Issues {
 		require.Equal(t, "ACKNOWLEDGED", issue.Status)
 	}
 
-	logs.Reset()
-	for range 2 {
-		response := request(t, router, "POST", base+"/decisions", token, dd.ReviewRequest{ExpectedVersion: detail.Dossier.Version, Action: "APPROVE", Reason: "private-review-reason"})
-		require.Equal(t, 409, response.Code)
-		assert.Equal(t, detail.Dossier.Version, get().Dossier.Version, "a rejected decision never advances the version")
-	}
 	rejections := 0
 	for _, line := range strings.Split(strings.TrimSpace(logs.String()), "\n") {
 		var entry map[string]any
@@ -69,7 +70,7 @@ func TestApprovalRequiresValidRequiredFieldsAfterWarningAcknowledgement(t *testi
 		}
 		rejections++
 		assert.Equal(t, "invalid_required_fields", entry["reason"])
-		assert.Equal(t, float64(2), entry["invalid_required_fields"])
+		assert.Equal(t, float64(3-rejections), entry["invalid_required_fields"])
 		assert.Equal(t, entry["expected_version"], entry["current_version"])
 		assert.NotEmpty(t, entry["request_id"])
 	}
@@ -80,15 +81,47 @@ func TestApprovalRequiresValidRequiredFieldsAfterWarningAcknowledgement(t *testi
 	require.NoError(t, app.DB.Model(&models.Decision{}).Where("dossier_id = ?", dossier.ID).Count(&decisions).Error)
 	assert.Zero(t, decisions)
 
-	for i, field := range fields {
-		value := "2026-10-31"
-		if i == 1 {
-			value = "079000000001"
-		}
-		require.Equal(t, 200, request(t, router, "PATCH", base+"/fields/"+field.ID.String(), token, dd.CorrectionRequest{ExpectedVersion: detail.Dossier.Version, Value: value, Reason: "OCR_ERROR", Note: "Checked original"}).Code)
-		detail = get()
-	}
 	decision := data[models.Decision](t, request(t, router, "POST", base+"/decisions", token, dd.ReviewRequest{ExpectedVersion: detail.Dossier.Version, Action: "APPROVE"}), 200)
 	assert.Equal(t, "APPROVE", decision.Action)
 	assert.Equal(t, models.Approved, get().Dossier.Status)
+	var stored models.Decision
+	require.NoError(t, app.DB.First(&stored, "id = ?", decision.ID).Error)
+	var snapshot struct {
+		Fields []models.ExtractedField
+		Issues []models.Issue
+	}
+	require.NoError(t, json.Unmarshal([]byte(stored.Snapshot), &snapshot))
+	require.Len(t, snapshot.Fields, 2)
+	for _, field := range snapshot.Fields {
+		assert.NotEqual(t, "VALID", field.Validation)
+	}
+	for _, issue := range snapshot.Issues {
+		assert.Equal(t, "ACKNOWLEDGED", issue.Status)
+		require.NotNil(t, issue.AcknowledgedBy)
+		assert.Equal(t, admin.ID, *issue.AcknowledgedBy)
+		assert.Equal(t, "Checked original and accepted", issue.Acknowledgement)
+	}
+	var event struct{ Metadata string }
+	require.NoError(t, app.DB.Table("audit_logs").Where("action = ? AND resource_id = ?", "DOSSIER_APPROVE", dossier.ID).First(&event).Error)
+	assert.Contains(t, event.Metadata, "accepted_required_fields")
+
+	// A new processing round with changed evidence invalidates the old acceptance.
+	detail = get()
+	require.Equal(t, 200, request(t, router, "POST", base+"/reopen", token, dd.ReasonRequest{ExpectedVersion: detail.Dossier.Version, Reason: "New document scan"}).Code)
+	detail = get()
+	require.NoError(t, app.DB.Model(&models.ExtractedField{}).Where("id = ?", fields[0].ID).Updates(map[string]any{"value": "2026-99-99", "validation": "INVALID_FORMAT"}).Error)
+	require.Equal(t, 200, request(t, router, "PATCH", base+"/assignment", token, dd.AssignmentRequest{ExpectedVersion: detail.Dossier.Version, AssigneeID: &admin.ID}).Code)
+	detail = get()
+	var changed models.Issue
+	for _, issue := range detail.Issues {
+		if issue.RuleCode == "field:"+fields[0].ID.String() {
+			changed = issue
+		}
+	}
+	require.Equal(t, "OPEN", changed.Status)
+	assert.Nil(t, changed.AcknowledgedBy)
+	require.Equal(t, 409, request(t, router, "POST", base+"/decisions", token, dd.ReviewRequest{ExpectedVersion: detail.Dossier.Version, Action: "APPROVE"}).Code)
+	require.Equal(t, 200, request(t, router, "POST", base+"/issues/"+changed.ID.String()+"/acknowledge", token, dd.ReasonRequest{ExpectedVersion: detail.Dossier.Version, Reason: "Checked changed document and accepted"}).Code)
+	detail = get()
+	require.Equal(t, 200, request(t, router, "POST", base+"/decisions", token, dd.ReviewRequest{ExpectedVersion: detail.Dossier.Version, Action: "APPROVE"}).Code)
 }

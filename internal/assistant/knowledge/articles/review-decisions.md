@@ -1,4 +1,4 @@
-{"id":"review-decisions","version":"2026-10-31.v2","aliases":["bổ sung","từ chối","mở lại","409","reopen","reject","request changes"],"pages":["detail","review"],"sources":["internal/dossier/logic/review.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Bổ sung, từ chối và mở lại"},"en":{"title":"Request changes, reject and reopen"}}}
+{"id":"review-decisions","version":"2026-10-31.v3","aliases":["bổ sung","từ chối","mở lại","409","reopen","reject","request changes"],"pages":["detail","review"],"sources":["internal/dossier/logic/review.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Bổ sung, từ chối và mở lại"},"en":{"title":"Request changes, reject and reopen"}}}
 
 ## vi
 

@@ -1,4 +1,4 @@
-{"id":"upload-limits","version":"2026-10-31.v2","aliases":["upload","tải lên","Excel","PDF","JPEG","PNG","giới hạn","limits","size"],"pages":["detail"],"sources":["pkg/config/load.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Định dạng và giới hạn tệp"},"en":{"title":"Formats and upload limits"}}}
+{"id":"upload-limits","version":"2026-10-31.v3","aliases":["upload","tải lên","Excel","PDF","JPEG","PNG","giới hạn","limits","size"],"pages":["detail"],"sources":["pkg/config/load.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Định dạng và giới hạn tệp"},"en":{"title":"Formats and upload limits"}}}
 
 ## vi
 

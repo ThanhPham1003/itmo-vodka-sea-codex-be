@@ -101,6 +101,14 @@ func (h *CatalogHandler) SuggestRules(c *gin.Context) {
 	out, err := h.s.SuggestRules(c.Request.Context(), c.Param("code"), in.Description)
 	result(c, 200, "Draft rules", out, err)
 }
+func (h *CatalogHandler) SuggestDraftRules(c *gin.Context) {
+	var in dd.DraftRuleSuggestionRequest
+	if !dto.BindJSON(c, &in) {
+		return
+	}
+	out, err := h.s.SuggestDraftRules(c.Request.Context(), in)
+	result(c, 200, "Draft rules", out, err)
+}
 func (h *CatalogHandler) SuggestDossier(c *gin.Context) {
 	var in struct {
 		Description   string   `json:"description" binding:"required,max=4000"`

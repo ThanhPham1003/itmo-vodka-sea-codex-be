@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"sea-codex-server/internal/common"
+	"sea-codex-server/internal/dossier/dto"
 	"sea-codex-server/internal/dossier/models"
 	"sea-codex-server/internal/dossier/repositories"
 	"sea-codex-server/pkg/ai"
@@ -104,4 +105,28 @@ func (l *CatalogLogic) SuggestDossier(ctx context.Context, description string, c
 		return nil, repositories.Error(err)
 	}
 	return json.Marshal(map[string]any{"draft": true, "definition": def})
+}
+
+// SuggestDraftRules validates the unsaved configuration without creating a catalog row.
+func (l *CatalogLogic) SuggestDraftRules(ctx context.Context, in dto.DraftRuleSuggestionRequest) (json.RawMessage, error) {
+	a, err := catalogAdmin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(in.Description) == "" || len(in.Description) > 4000 {
+		return nil, common.ErrInvalidArgument
+	}
+	definition := in.Definition
+	definition.Documents = append([]models.DocumentRequirement(nil), in.Definition.Documents...)
+	definition.Rules = append([]models.ComparisonRule(nil), in.Definition.Rules...)
+	r := l.repo.Scope(a.CompanyID)
+	pinned, err := l.validateDossier(ctx, r, &definition, nil)
+	if err != nil {
+		return nil, err
+	}
+	docs := make(map[string]models.DocumentDefinition, len(pinned))
+	for _, doc := range pinned {
+		docs[doc.Code] = doc.Definition
+	}
+	return l.suggestRulesForDefinition(ctx, a, r, definition, docs, uuid.Nil, 0, in.Description)
 }

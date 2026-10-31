@@ -36,6 +36,7 @@ type Decision struct {
 	CompanyID uuid.UUID `gorm:"type:uuid;not null;index" json:"company_id"`
 	DossierID uuid.UUID `gorm:"type:uuid;not null;index" json:"dossier_id"`
 	ActorID   uuid.UUID `gorm:"type:uuid;not null" json:"actor_id"`
+	ActorName string    `gorm:"-" json:"actor_name"`
 	Action    string    `gorm:"size:40;not null" json:"action"`
 	Reason    string    `json:"reason"`
 	Version   uint64    `gorm:"not null" json:"version"`

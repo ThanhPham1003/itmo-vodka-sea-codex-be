@@ -1,4 +1,4 @@
-{"id":"roles-access","version":"2026-10-31.v2","aliases":["vai trò","phân quyền","broker","manager","legal","notary","permissions","access"],"pages":["members"],"sources":["internal/common/permissions.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Vai trò và quyền truy cập"},"en":{"title":"Roles and access"}}}
+{"id":"roles-access","version":"2026-10-31.v3","aliases":["vai trò","phân quyền","broker","manager","legal","notary","permissions","access"],"pages":["members"],"sources":["internal/common/permissions.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Vai trò và quyền truy cập"},"en":{"title":"Roles and access"}}}
 
 ## vi
 

@@ -1,4 +1,4 @@
-{"id":"checklist-conditions","version":"2026-10-31.v2","aliases":["checklist","thiếu giấy tờ","có điều kiện","kết hôn","marriage","conditional","missing documents"],"pages":["detail"],"sources":["internal/dossier/logic/reconciliation.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Checklist và giấy tờ có điều kiện"},"en":{"title":"Checklist and conditional documents"}}}
+{"id":"checklist-conditions","version":"2026-10-31.v3","aliases":["checklist","thiếu giấy tờ","có điều kiện","kết hôn","marriage","conditional","missing documents"],"pages":["detail"],"sources":["internal/dossier/logic/reconciliation.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Checklist và giấy tờ có điều kiện"},"en":{"title":"Checklist and conditional documents"}}}
 
 ## vi
 

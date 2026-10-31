@@ -21,6 +21,7 @@ type ICatalogService interface {
 	SuggestDocument(context.Context, string) (json.RawMessage, error)
 	SuggestDossier(context.Context, string, []string) (json.RawMessage, error)
 	SuggestRules(context.Context, string, string) (json.RawMessage, error)
+	SuggestDraftRules(context.Context, dto.DraftRuleSuggestionRequest) (json.RawMessage, error)
 }
 
 var catalogRegistry struct {

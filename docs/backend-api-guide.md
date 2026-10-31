@@ -39,6 +39,14 @@ Assignee là thành viên active có dossier:read, không phải broker. Cấp d
 4. `PUT /document-types/{code}` hoặc `/dossier-types/{code}` gửi toàn bộ definition phẳng và `expected_version=current_version`. Giữ key/code cũ khi sửa, để rỗng khi thêm mới. `active:false`/DELETE ngừng dùng, không phá snapshot hồ sơ cũ.
 5. `POST .../suggestions` trả `{draft:true,definition:...}` hoặc rules nháp. Admin rà soát và POST/PUT rõ ràng để lưu. Không tự kích hoạt. Không có API lưu nháp lâu dài; client giữ nháp trả về đến khi admin lưu.
 
+Khi tạo loại bộ hồ sơ mới, có thể gọi `POST /dossier-types/comparison-rules/suggestions` trước khi lưu:
+
+```json
+{"description":"Đối chiếu thông tin chủ thể","definition":{"name":"Bộ hồ sơ mới","description":"Mô tả nghiệp vụ","documents":[{"document_type":"<returned-code>","schema_version":1,"role":"bên mua","required":true,"min_count":1}],"rules":[]}}
+```
+
+API dùng giấy tờ/vai trò đang chọn và phiên bản schema chỉ định, trả `{draft:true,rules:[...]}` không có `configuration_version`. Key yêu cầu và code quy tắc mới để rỗng. Chỉ admin công ty được gọi; giấy tờ khác công ty hoặc đã ngừng dùng bị từ chối. API không tạo loại hồ sơ hoặc phiên bản; frontend thêm quy tắc vào bản đang soạn, giữ các quy tắc thủ công và chỉ gọi `POST /dossier-types` khi người dùng bấm lưu. API cho loại đã lưu `/dossier-types/{code}/comparison-rules/suggestions` vẫn trả `configuration_version` để kiểm tra phiên bản khi chỉnh sửa.
+
 Một document type dùng nhiều lần cần role hoặc subject_field để ghép đúng đối tượng. Engine chỉ đối soát các cặp một-một có subject tin cậy; mơ hồ/thiếu/không parse được tạo WARNING thay vì chọn trường confidence cao bất kỳ. Nhiều đối tượng ghép đúng được kiểm tra từng cặp.
 
 `rules[].left/right.role` là bộ lọc vai trò của giấy tờ, không phải tên vai trò suy ra từ nhãn trường. Vai trò khác rỗng phải tồn tại trong `documents[]` của đúng `document_type`; rỗng nghĩa là không lọc theo vai trò. Ví dụ giấy tờ chỉ có `role:""` thì quy tắc không được tự đặt `role:"bên mua"` dù trường có tên “Họ tên bên mua”. API gợi ý quy tắc giới hạn code/field/role theo cấu hình và schema đã pin, rồi dùng cùng bộ kiểm tra với PUT trước khi trả bản nháp. Gợi ý không thay đổi yêu cầu giấy tờ và không tự lưu.
@@ -46,6 +54,8 @@ Một document type dùng nhiều lần cần role hoặc subject_field để gh
 Conditional requirement hỗ trợ điều kiện một trường `equals`/`exists` có kiểu, cùng tenant và có tài liệu nguồn trong cấu hình. Dependency vòng bị từ chối. Không phải DSL biểu thức tổng quát; chưa có AND/OR/nested expression. Không có condition thì checklist chờ xác nhận thủ công; thêm/bỏ phát sinh phải có lý do.
 
 ## Tạo hồ sơ, upload nhiều đợt và xử lý
+
+Các GET vẫn giữ UUID/code/key cho thao tác API, nhưng giao diện dùng tên riêng: danh sách/chi tiết hồ sơ có `creator_name`, `assignee_name`; quyết định trong chi tiết có `actor_name`; nhật ký có `actor_name`, `resource_name`, `dossier_title`. GET loại bộ hồ sơ có `document_schemas` chứa tên và nhãn trường theo đúng phiên bản giấy tờ đã pin. Đây là dữ liệu chỉ resolve khi đọc, không cần migration. Chi tiết từng endpoint: [Rà soát GET và nhãn hiển thị](get-display-label-audit.md).
 
 1. `POST /dossiers` với `{"title":"Synthetic case","dossier_type":"<code>","priority":0}`. Server pin toàn bộ cấu hình/version và tạo checklist.
 2. Upload `POST /dossiers/{id}/files` multipart:
@@ -71,7 +81,7 @@ Mutation gửi `expected_version` từ detail mới nhất. 409 nghĩa version c
 - Phân công: `PATCH /dossiers/{id}/assignment`, `assignee_id` hoặc null; tùy chọn priority 0..5. Review queue sắp ưu tiên rồi thời gian tạo.
 - Sửa: `PATCH .../fields/{field_id}` với value, reason (`OCR_ERROR`, `SOURCE_ERROR`, `ADMIN_UNIT_CHANGE`, `OTHER`), note bắt buộc cho OTHER. Lưu before/after riêng và đối soát lại; API audit không lộ giá trị này.
 - WARNING: `POST .../issues/{issue_id}/acknowledge`, reason bắt buộc. Không xác nhận thay cho sửa BLOCKER. Dữ liệu thay đổi làm mất xác nhận cũ nếu evidence đổi.
-- Review: `POST .../decisions`, action APPROVE/REJECT/REQUEST_CHANGES. Approve cần đủ nguồn, required fields hợp lệ, không pending/open WARNING/BLOCKER. Reject/request changes bắt buộc reason. Reviewer phải được phân công, ngoại trừ admin công ty.
+- Review: `POST .../decisions`, action APPROVE/REJECT/REQUEST_CHANGES. Approve cần đủ nguồn, không pending/open WARNING/BLOCKER. Trường bắt buộc phải hợp lệ **hoặc cảnh báo của chính trường đó đã được người kiểm tra xác nhận chấp nhận kèm lý do**. Xác nhận phải giữ nguyên hiệu lực sau khi đối soát lại dữ liệu hiện tại; xác nhận mục khác không thay thế. Không sửa giá trị/validation OCR để giả lập đạt kiểm tra. Quyết định lưu snapshot người xác nhận/lý do và audit `accepted_required_fields` khi có ngoại lệ được chấp nhận. Reject/request changes bắt buộc reason. Reviewer phải được phân công, ngoại trừ admin công ty.
 - Hồ sơ approved/rejected bị khóa. `POST .../reopen` chỉ mở hồ sơ approved, reason bắt buộc; giữ quyết định cũ và phải duyệt lại.
 - Detail luôn mask PII, kể cả admin. `POST .../pii/reveal` với field_ids, quyền pii:view + read, audit VIEW_PII; broker bị từ chối.
 - `GET .../files/{file_id}/content` stream ảnh/PDF, cần image_view + read, audit VIEW_FILE. Chưa có ảnh làm mờ dành cho broker.

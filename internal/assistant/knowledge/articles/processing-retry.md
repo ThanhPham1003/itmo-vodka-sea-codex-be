@@ -1,4 +1,4 @@
-{"id":"processing-retry","version":"2026-10-31.v2","aliases":["OCR","FAILED","thử lại","retry","phân loại","classification","processing","healthy"],"pages":["detail","connection"],"sources":["internal/dossier/logic/processing.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Phân loại, OCR và thử lại"},"en":{"title":"Classification, OCR and retries"}}}
+{"id":"processing-retry","version":"2026-10-31.v3","aliases":["OCR","FAILED","thử lại","retry","phân loại","classification","processing","healthy"],"pages":["detail","connection"],"sources":["internal/dossier/logic/processing.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Phân loại, OCR và thử lại"},"en":{"title":"Classification, OCR and retries"}}}
 
 ## vi
 

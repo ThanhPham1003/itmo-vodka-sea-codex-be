@@ -1,4 +1,4 @@
-{"id":"privacy-evidence","version":"2026-10-31.v2","aliases":["CCCD","PII","che dữ liệu","bản gốc","masked","privacy","original"],"pages":["detail"],"sources":["internal/dossier/logic/privacy.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Thông tin cá nhân và giấy tờ gốc"},"en":{"title":"Personal information and originals"}}}
+{"id":"privacy-evidence","version":"2026-10-31.v3","aliases":["CCCD","PII","che dữ liệu","bản gốc","masked","privacy","original"],"pages":["detail"],"sources":["internal/dossier/logic/privacy.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Thông tin cá nhân và giấy tờ gốc"},"en":{"title":"Personal information and originals"}}}
 
 ## vi
 

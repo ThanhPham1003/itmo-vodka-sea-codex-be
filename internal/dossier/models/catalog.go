@@ -89,11 +89,12 @@ type DossierDefinition struct {
 }
 type DossierType struct {
 	base.BaseModel
-	CompanyID      uuid.UUID         `gorm:"type:uuid;not null;uniqueIndex:idx_dossier_company_code,priority:1" json:"company_id"`
-	Code           string            `gorm:"not null;size:80;uniqueIndex:idx_dossier_company_code,priority:2" json:"code"`
-	CurrentVersion int               `gorm:"not null" json:"current_version"`
-	Active         bool              `gorm:"not null" json:"active"`
-	Definition     DossierDefinition `gorm:"serializer:json;type:jsonb" json:"definition"`
+	DocumentSchemas []PinnedDocument  `gorm:"-" json:"document_schemas,omitempty"`
+	CompanyID       uuid.UUID         `gorm:"type:uuid;not null;uniqueIndex:idx_dossier_company_code,priority:1" json:"company_id"`
+	Code            string            `gorm:"not null;size:80;uniqueIndex:idx_dossier_company_code,priority:2" json:"code"`
+	CurrentVersion  int               `gorm:"not null" json:"current_version"`
+	Active          bool              `gorm:"not null" json:"active"`
+	Definition      DossierDefinition `gorm:"serializer:json;type:jsonb" json:"definition"`
 }
 
 func (DossierType) TableName() string { return "company_dossier_types" }

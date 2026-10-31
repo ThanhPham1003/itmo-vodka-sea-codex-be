@@ -1,4 +1,4 @@
-{"id":"common-errors","version":"2026-10-31.v2","aliases":["lỗi","kết nối","401","403","5xx","connection","errors"],"pages":["connection"],"sources":["internal/common/errors.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Kết nối và lỗi thường gặp"},"en":{"title":"Connection and common errors"}}}
+{"id":"common-errors","version":"2026-10-31.v3","aliases":["lỗi","kết nối","401","403","5xx","connection","errors"],"pages":["connection"],"sources":["internal/common/errors.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Kết nối và lỗi thường gặp"},"en":{"title":"Connection and common errors"}}}
 
 ## vi
 

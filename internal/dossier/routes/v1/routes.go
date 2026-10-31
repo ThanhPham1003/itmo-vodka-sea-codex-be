@@ -20,6 +20,7 @@ func RegisterRoutes(app *common.App, catalog services.ICatalogService, dossiers 
 	g.GET("/dossier-types", c.ListDossiers)
 	g.POST("/dossier-types", c.PutDossier)
 	g.POST("/dossier-types/suggestions", c.SuggestDossier)
+	g.POST("/dossier-types/comparison-rules/suggestions", c.SuggestDraftRules)
 	g.GET("/dossier-types/:code", c.GetDossier)
 	g.PUT("/dossier-types/:code", c.PutDossier)
 	g.DELETE("/dossier-types/:code", c.ArchiveDossier)

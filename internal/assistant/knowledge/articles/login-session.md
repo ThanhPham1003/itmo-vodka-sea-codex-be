@@ -1,4 +1,4 @@
-{"id":"login-session","version":"2026-10-31.v2","aliases":["đăng nhập","login","session","tải lại trang","demo","SSO","quên mật khẩu"],"pages":[],"sources":["internal/auth/routes/v1/routes.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Đăng nhập, phiên và demo"},"en":{"title":"Login, sessions and demo"}}}
+{"id":"login-session","version":"2026-10-31.v3","aliases":["đăng nhập","login","session","tải lại trang","demo","SSO","quên mật khẩu"],"pages":[],"sources":["internal/auth/routes/v1/routes.go"],"revision":"dae1d41e4618300b4912556aecbac4b42e92753a","translations":{"vi":{"title":"Đăng nhập, phiên và demo"},"en":{"title":"Login, sessions and demo"}}}
 
 ## vi
 

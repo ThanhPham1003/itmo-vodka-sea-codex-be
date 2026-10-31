@@ -19,7 +19,9 @@ type Dossier struct {
 	base.BaseModel
 	CompanyID     uuid.UUID       `gorm:"type:uuid;not null;index:idx_dossier_scope,priority:1" json:"company_id"`
 	CreatorID     uuid.UUID       `gorm:"type:uuid;not null;index" json:"creator_id"`
+	CreatorName   string          `gorm:"-" json:"creator_name"`
 	AssigneeID    *uuid.UUID      `gorm:"type:uuid;index" json:"assignee_id"`
+	AssigneeName  string          `gorm:"-" json:"assignee_name"`
 	Title         string          `gorm:"not null;size:300" json:"title"`
 	Priority      int             `gorm:"not null" json:"priority"`
 	TypeCode      string          `gorm:"not null;size:80;index" json:"dossier_type"`

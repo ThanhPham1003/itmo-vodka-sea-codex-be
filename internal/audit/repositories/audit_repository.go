@@ -61,5 +61,8 @@ func (r *AuditRepository) List(ctx context.Context, company uuid.UUID, f dto.Fil
 		Order("audit_logs.created_at DESC, audit_logs.id DESC").Limit(f.Limit).Offset(f.Offset).Find(&out.Items).Error; err != nil {
 		return out, fmt.Errorf("list audit: %w", err)
 	}
+	if err := r.resolveResources(ctx, company, out.Items); err != nil {
+		return out, fmt.Errorf("resolve audit resources: %w", err)
+	}
 	return out, nil
 }

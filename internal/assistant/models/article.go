@@ -1,7 +1,7 @@
 // Package models defines immutable knowledge values, not persisted GORM entities.
 package models
 
-const KnowledgeVersion = "2026-10-31.v2"
+const KnowledgeVersion = "2026-10-31.v3"
 
 type Translation struct {
 	Title   string `json:"title"`
