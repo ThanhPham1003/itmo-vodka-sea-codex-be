@@ -60,11 +60,19 @@ jobs:
           cache-from: type=gha,scope=sea-codex-image
           cache-to: type=gha,mode=max,scope=sea-codex-image
 
-      - name: Check entrypoint and runtime permissions
+      - name: Check API help exit code
+        run: docker run --rm sea-codex-server:ci --help
+
+      - name: Check runtime identity and directory permissions
         run: |
-          docker run --rm sea-codex-server:ci --help
-          docker run --rm --entrypoint /bin/sh sea-codex-server:ci -c \
-            'test "$(id -u)" = "10001" && test -r /app/config/app.yaml && test -w /app/storage/uploads'
+          docker run --rm --entrypoint /bin/sh sea-codex-server:ci -euxc '
+            id
+            ls -ld /app /app/config /app/config/app.yaml /app/storage /app/storage/uploads
+            test "$(id -u)" = "10001"
+            test -x /app/config
+            test -r /app/config/app.yaml
+            test -w /app/storage/uploads
+          '
 
   publish:
     name: Publish multi-platform image

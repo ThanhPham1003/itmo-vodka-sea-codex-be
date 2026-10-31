@@ -68,7 +68,7 @@ Không cần password database, PASETO key hoặc OCR key để build/push image
 | Job | Công việc | Khi chạy |
 | --- | --- | --- |
 | `test` | gofmt check, vet, unit/HTTP tests, build qua `make check` | Mọi trigger |
-| `container` | Build image `linux/amd64`, load vào runner, kiểm tra entrypoint `--help`, UID và quyền đọc config/ghi storage | Sau khi `test` pass |
+| `container` | Build image `linux/amd64`, load vào runner; kiểm tra `--help` và quyền runtime ở hai step riêng, in UID/quyền thư mục khi kiểm tra | Sau khi `test` pass |
 | `publish` | Login Docker Hub, build/push `linux/amd64` và `linux/arm64` bằng Buildx/QEMU | Sau cả hai job pass, chỉ trên `main` hoặc tag `v*` |
 
 Pull request không login/push Docker Hub và không cần Docker Hub secrets. Chạy thủ công từ nhánh khác `main`/tag `v*` chỉ kiểm tra, không publish. Build cache dùng GitHub Actions cache; token của GitHub chỉ cần `contents: read`.
@@ -93,6 +93,10 @@ Thay repository nếu đã đặt `DOCKERHUB_REPOSITORY`. Workflow chỉ publish
 
 Source được kiểm tra bằng `make check`; binary được cross-compile với `CGO_ENABLED=0` cho Linux `amd64` và `arm64`. Workflow được kiểm tra bằng actionlint.
 
-Máy thực hiện thay đổi chưa chạy Docker daemon, nên chưa build/run container local và chưa push lên Docker Hub. Job `container` sẽ kiểm tra image thực trên GitHub runner trước khi cho phép publish. Chưa thực hiện thay đổi secrets hoặc kích hoạt workflow trên GitHub trong bước này.
+Khi kiểm tra lỗi CI, đã khởi động Docker Desktop và tái hiện bằng image `linux/amd64`: `--help` trả exit code 0, còn kiểm tra quyền đọc config trả exit code 1. Nguyên nhân là `COPY --chmod=0444` tạo thư mục `/app/config` với mode `0444`, khiến UID `10001` không đi vào được thư mục.
+
+Dockerfile đã tách việc tạo thư mục mode `0755` khỏi thiết lập file config mode `0444`. Workflow tách hai bước kiểm tra, hiển thị quyền các đường dẫn và trace từng assertion. Test CLI bổ sung bảo đảm `--help`/`-h` thành công ngay cả khi không có config hoặc DB. Chưa push image hoặc kích hoạt workflow trên GitHub từ máy local.
+
+Đã build đầy đủ image sửa cho `linux/amd64` và chạy lại cả hai step trên Docker local: `--help` trả 0; UID `10001`, quyền đi vào thư mục config, đọc file config và ghi storage đều pass, step runtime trả 0. `make check` và actionlint cũng pass. Kiểm chứng container của bản sửa này thực hiện trên `amd64`; manifest đa kiến trúc và publish vẫn do CI thực hiện sau khi code được push.
 
 Tham khảo: [Docker GitHub Actions](https://docs.docker.com/build/ci/github-actions/), [multi-stage build](https://docs.docker.com/build/building/best-practices/), [official Go image tags](https://raw.githubusercontent.com/docker-library/official-images/master/library/golang).

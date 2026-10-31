@@ -27,13 +27,17 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd --gid 10001 app && \
     useradd --uid 10001 --gid 10001 --no-create-home --home-dir /app --shell /usr/sbin/nologin app && \
-    install -d -o 10001 -g 10001 /app/storage/uploads
+    install -d -m 0755 /app/config /app/storage && \
+    install -d -m 0755 -o 10001 -g 10001 /app/storage/uploads
 
 WORKDIR /app
 ENV TZ=Asia/Ho_Chi_Minh
 COPY --from=build --chmod=0555 /out/api /app/api
 COPY --from=build --chmod=0555 /out/keygen /app/keygen
-COPY --chmod=0444 config/app.docker.yaml /app/config/app.yaml
+# Keep directory traversal permissions separate from the read-only file mode.
+# COPY --chmod can also apply its mode to newly created parent directories.
+COPY config/app.docker.yaml /app/config/app.yaml
+RUN chmod 0444 /app/config/app.yaml
 
 USER 10001:10001
 EXPOSE 8080
