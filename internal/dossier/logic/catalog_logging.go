@@ -23,6 +23,9 @@ func (l *CatalogLogic) logSuggestionFailure(ctx context.Context, operation, stag
 	}
 	event := l.log.Error().Str("request_id", common.RequestIDFromContext(ctx)).
 		Str("operation", operation).Str("stage", stage)
+	if stage == "decode" {
+		addDecodeDiagnostics(event, err)
+	}
 	var failure *ai.Failure
 	if errors.As(err, &failure) {
 		reason = failure.Reason
