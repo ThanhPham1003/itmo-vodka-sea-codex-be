@@ -1,0 +1,21 @@
+# Send only build inputs; exclude Git history, local config, secrets and uploads.
+**
+!Dockerfile
+!go.mod
+!go.sum
+!cmd/
+!cmd/**
+!internal/
+!internal/**
+!pkg/
+!pkg/**
+!config/
+!config/app.docker.yaml
+
+# Keep nested local secrets out even inside source directories.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*.local.yaml
+**/*.local.yml

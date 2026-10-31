@@ -103,7 +103,15 @@ Viper đọc file `--config` và biến môi trường với tên viết hoa, d�
 
 Duration dùng định dạng như `5s`, `30m`, `24h`. PASETO private key là 64 byte encoded hex, public key là 32 byte encoded hex; startup kiểm tra cặp key khớp nhau. Token chứa identity và mốc thời gian; company, role và quyền phải được resolve lại từ nguồn tin cậy mỗi request.
 
-YAML mẫu bind `127.0.0.1` và dùng `sslmode: disable` cho DB local. Khi triển khai từ xa, cấu hình host/network và TLS theo hạ tầng; chưa có Docker/CI/deployment trong đợt scaffold. Không có AutoMigrate hoặc schema nghiệp vụ tự chạy lúc startup.
+YAML mẫu local bind `127.0.0.1` và dùng `sslmode: disable` cho DB local. Image Docker dùng `config/app.docker.yaml`, bind `0.0.0.0` và mặc định yêu cầu TLS tới DB; cấu hình host/network/TLS theo hạ tầng. Không có AutoMigrate hoặc schema nghiệp vụ tự chạy lúc startup.
+
+## Docker và CI
+
+Đã có [Dockerfile](Dockerfile) multi-stage chạy bằng user `10001:10001` và [workflow GitHub Actions](.github/workflows/cicd.yaml) để test, kiểm tra container rồi push image `amd64`/`arm64` lên Docker Hub.
+
+Cấu hình repository secrets `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`; tùy chọn variable `DOCKERHUB_REPOSITORY` (mặc định `sea-codex-server`). Push `main` tạo tag `latest` và `sha-<commit>`; push tag `v*` tạo tag release và `sha-<commit>`. Pull request chỉ kiểm tra, không publish.
+
+Xem [hướng dẫn Docker và CI](docs/docker-and-ci.md) để build/run local, cấu hình secrets và vận hành workflow. Password/key runtime được truyền khi chạy container.
 
 ## Kiểm tra và build
 
