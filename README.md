@@ -62,6 +62,8 @@ Cần Go 1.26+, PostgreSQL và C toolchain cho SQLite tests. Cài Poppler (`pdfi
 
    Lần đầu tạo 17 bảng nghiệp vụ. Startup mặc định `auto_migrate=false`; các lần sau chạy `make run CONFIG=config/app.local.yaml`. Khi nâng cấp schema, chạy migration có kiểm soát trước các replica phục vụ traffic.
 
+   Database đã có dữ liệu mà lỗi `companies.active contains null values`: xem [hướng dẫn sửa migration](docs/auth-active-migration.md). Migration backfill trạng thái trước `NOT NULL`, giữ giá trị đã biết; trạng thái không xác định mặc định inactive.
+
 5. Kiểm tra:
 
    ```bash
@@ -76,14 +78,14 @@ Trong YAML local hoặc env, đặt provider/model/key thật rồi bật worker
 
 ```bash
 export PROCESSING_ENABLED=true
-export PROCESSING_PROVIDER=anthropic
-export PROCESSING_BASE_URL=https://api.anthropic.com
-export PROCESSING_MODEL='<vision-model-id>'
+export PROCESSING_PROVIDER=openai-compatible
+export PROCESSING_BASE_URL=https://api.openai.com
+export PROCESSING_MODEL='<openai-vision-model-id>'
 # Nạp PROCESSING_API_KEY qua secret của môi trường.
 make run CONFIG=config/app.local.yaml
 ```
 
-Adapter `openai-compatible` dùng endpoint `/v1/chat/completions`, JSON output và ảnh base64; endpoint phải hỗ trợ `max_completion_tokens`, `response_format` và `store=false`. Base URL có thể kết thúc bằng `/v1`. Anthropic dùng `/v1/messages`. Không có model/key mặc định và không có kết quả OCR giả khi provider lỗi. Nội dung trang tài liệu được gửi tới provider cấu hình khi xử lý; gợi ý schema/rule chỉ gửi cấu hình.
+Mặc định dùng OpenAI qua adapter `openai-compatible`, base URL `https://api.openai.com`, endpoint `/v1/chat/completions`, JSON output và ảnh base64 theo [OpenAI Docs](https://developers.openai.com/api/docs/guides/images-vision?api-mode=chat). Endpoint phải hỗ trợ `max_completion_tokens`, `response_format` và `store=false`. Base URL có thể kết thúc bằng `/v1`. `PROCESSING_API_KEY` phải là OpenAI API key; không tự đọc biến `OPENAI_API_KEY`. Cấu hình env cũ có thể ghi đè YAML, vì vậy cần đổi cả provider/base URL trong môi trường deploy rồi restart/recreate container. Anthropic vẫn có adapter tùy chọn dùng `/v1/messages`. Không có model/key mặc định và không có kết quả OCR giả khi provider lỗi. Nội dung trang tài liệu được gửi tới provider cấu hình khi xử lý; gợi ý schema/rule chỉ gửi cấu hình.
 
 Worker mặc định **tắt**. Upload vẫn nhận và giữ trạng thái `UPLOADED`/`PROCESSING` khi chờ worker; bật processing và restart để xử lý. Poll mặc định 2s, concurrency 3 file/process, tối đa 10; tổng concurrency tăng theo số replica. Claim/lease nằm trong PostgreSQL, worker cũ bị từ chối khi claim đổi; đây là hàng đợi trong tiến trình API, chưa phải service queue độc lập.
 

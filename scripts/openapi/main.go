@@ -61,9 +61,9 @@ func schema(t reflect.Type) obj {
 	case reflect.Float32, reflect.Float64:
 		return obj{"type": "number", "format": "double"}
 	case reflect.Slice, reflect.Array:
-		return obj{"type": "array", "items": schema(t.Elem())}
+		return obj{"type": "array", "items": schema(t.Elem()), "nullable": true}
 	case reflect.Map:
-		return obj{"type": "object", "additionalProperties": schema(t.Elem())}
+		return obj{"type": "object", "additionalProperties": schema(t.Elem()), "nullable": true}
 	case reflect.Struct:
 		name := typeName(t)
 		if _, ok := schemas[name]; ok {
@@ -93,6 +93,7 @@ func schema(t reflect.Type) obj {
 				for _, rule := range strings.Split(f.Tag.Get("binding"), ",") {
 					if rule == "required" {
 						required = append(required, name)
+						property["nullable"] = false
 					}
 					parts := strings.SplitN(rule, "=", 2)
 					if len(parts) != 2 {

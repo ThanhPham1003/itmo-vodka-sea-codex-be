@@ -3,6 +3,7 @@ package bootstrap_test
 import (
 	paseto "aidanwoods.dev/go-paseto"
 	"context"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,7 @@ import (
 
 func newTestApp(t *testing.T) *common.App {
 	t.Helper()
+	gin.SetMode(gin.TestMode)
 	var dialect gorm.Dialector = sqlite.Open("file:" + uuid.NewString() + "?mode=memory&cache=shared&_foreign_keys=1")
 	if dsn := os.Getenv("TEST_POSTGRES_DSN"); dsn != "" {
 		// Every test app receives its own schema; no existing application tables are touched.

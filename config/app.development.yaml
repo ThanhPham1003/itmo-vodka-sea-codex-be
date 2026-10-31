@@ -40,8 +40,8 @@ uploads:
 # Set model/key explicitly. Background processing is opt-in.
 processing:
   enabled: false
-  provider: anthropic
-  base_url: https://api.anthropic.com
+  provider: openai-compatible
+  base_url: https://api.openai.com
   api_key: ""
   model: ""
   poll_interval: 2s

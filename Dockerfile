@@ -41,7 +41,7 @@ RUN apt-get update && \
     install -d -m 0755 -o 10001 -g 10001 /app/storage/uploads
 
 WORKDIR /app
-ENV TZ=Asia/Ho_Chi_Minh
+ENV TZ=Asia/Ho_Chi_Minh XDG_CACHE_HOME=/tmp/sea-codex-cache
 COPY --from=build --chmod=0555 /out/api /app/api
 COPY --from=build --chmod=0555 /out/keygen /app/keygen
 # Keep directory traversal permissions separate from the read-only file mode.

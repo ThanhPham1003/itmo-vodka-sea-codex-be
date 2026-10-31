@@ -20,6 +20,20 @@ jobs:
     name: Format, vet, test and build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: migration_test
+          POSTGRES_PASSWORD: migration-test-only
+          POSTGRES_DB: sea_codex_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U migration_test -d sea_codex_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -39,6 +53,11 @@ jobs:
 
       - name: Verify source
         run: make check
+
+      - name: Verify PostgreSQL migrations and application flows
+        env:
+          TEST_POSTGRES_DSN: postgres://migration_test:migration-test-only@127.0.0.1:5432/sea_codex_test?sslmode=disable
+        run: go test -count=1 ./internal/auth/migrations ./internal/bootstrap
 
       - name: Verify evaluation metrics
         run: python3 -m unittest discover -s scripts/evaluation

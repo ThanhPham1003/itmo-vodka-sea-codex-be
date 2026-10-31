@@ -33,6 +33,7 @@
           },
           "metadata": {
             "additionalProperties": {},
+            "nullable": true,
             "type": "object"
           },
           "resource": {
@@ -105,6 +106,7 @@
           },
           "name": {
             "maxLength": 200,
+            "nullable": false,
             "type": "string"
           },
           "phone": {
@@ -123,16 +125,19 @@
           "email": {
             "format": "email",
             "maxLength": 254,
+            "nullable": false,
             "type": "string"
           },
           "full_name": {
             "maxLength": 200,
+            "nullable": false,
             "type": "string"
           },
           "password": {
             "format": "password",
             "maxLength": 72,
             "minLength": 12,
+            "nullable": false,
             "type": "string",
             "writeOnly": true
           },
@@ -140,14 +145,17 @@
             "items": {
               "type": "string"
             },
+            "nullable": true,
             "type": "array"
           },
           "role": {
+            "nullable": false,
             "type": "string"
           },
           "username": {
             "maxLength": 64,
             "minLength": 3,
+            "nullable": false,
             "type": "string"
           }
         },
@@ -166,11 +174,13 @@
           "password": {
             "format": "password",
             "maxLength": 72,
+            "nullable": false,
             "type": "string",
             "writeOnly": true
           },
           "username_or_email": {
             "maxLength": 254,
+            "nullable": false,
             "type": "string"
           }
         },
@@ -202,27 +212,32 @@
         "additionalProperties": false,
         "properties": {
           "company": {
-            "$ref": "#/components/schemas/AuthCompanyRequest"
+            "$ref": "#/components/schemas/AuthCompanyRequest",
+            "nullable": false
           },
           "email": {
             "format": "email",
             "maxLength": 254,
+            "nullable": false,
             "type": "string"
           },
           "full_name": {
             "maxLength": 200,
+            "nullable": false,
             "type": "string"
           },
           "password": {
             "format": "password",
             "maxLength": 72,
             "minLength": 12,
+            "nullable": false,
             "type": "string",
             "writeOnly": true
           },
           "username": {
             "maxLength": 64,
             "minLength": 3,
+            "nullable": false,
             "type": "string"
           }
         },
@@ -244,15 +259,17 @@
                 "type": "boolean"
               }
             ],
-            "nullable": true
+            "nullable": false
           },
           "permissions": {
             "items": {
               "type": "string"
             },
+            "nullable": true,
             "type": "array"
           },
           "role": {
+            "nullable": false,
             "type": "string"
           }
         },
@@ -293,6 +310,7 @@
             "items": {
               "type": "string"
             },
+            "nullable": true,
             "type": "array"
           },
           "role": {
@@ -318,6 +336,7 @@
           },
           "expected_version": {
             "format": "int64",
+            "nullable": false,
             "type": "integer"
           },
           "priority": {
@@ -347,6 +366,7 @@
               "format": "int64",
               "type": "integer"
             },
+            "nullable": true,
             "type": "array"
           },
           "role": {
@@ -368,10 +388,12 @@
             "nullable": true
           },
           "document_type": {
+            "nullable": false,
             "type": "string"
           },
           "expected_version": {
             "format": "int64",
+            "nullable": false,
             "type": "integer"
           },
           "role": {
@@ -446,6 +468,7 @@
         "properties": {
           "expected_version": {
             "format": "int64",
+            "nullable": false,
             "type": "integer"
           },
           "note": {
@@ -453,6 +476,7 @@
             "type": "string"
           },
           "reason": {
+            "nullable": false,
             "type": "string"
           },
           "value": {
@@ -471,6 +495,7 @@
         "properties": {
           "dossier_type": {
             "maxLength": 80,
+            "nullable": false,
             "type": "string"
           },
           "priority": {
@@ -481,6 +506,7 @@
           },
           "title": {
             "maxLength": 300,
+            "nullable": false,
             "type": "string"
           }
         },
@@ -535,18 +561,21 @@
             "items": {
               "$ref": "#/components/schemas/DossierRequirement"
             },
+            "nullable": true,
             "type": "array"
           },
           "decisions": {
             "items": {
               "$ref": "#/components/schemas/DossierDecision"
             },
+            "nullable": true,
             "type": "array"
           },
           "document_groups": {
             "items": {
               "$ref": "#/components/schemas/DossierGroup"
             },
+            "nullable": true,
             "type": "array"
           },
           "dossier": {
@@ -556,18 +585,21 @@
             "items": {
               "$ref": "#/components/schemas/DossierExtractedField"
             },
+            "nullable": true,
             "type": "array"
           },
           "files": {
             "items": {
               "$ref": "#/components/schemas/DossierFile"
             },
+            "nullable": true,
             "type": "array"
           },
           "issues": {
             "items": {
               "$ref": "#/components/schemas/DossierIssue"
             },
+            "nullable": true,
             "type": "array"
           }
         },
@@ -582,6 +614,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierFieldSchema"
             },
+            "nullable": true,
             "type": "array"
           },
           "name": {
@@ -591,6 +624,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierSpecialRequirement"
             },
+            "nullable": true,
             "type": "array"
           }
         },
@@ -702,6 +736,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierFieldSchema"
             },
+            "nullable": true,
             "type": "array"
           },
           "name": {
@@ -711,6 +746,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierSpecialRequirement"
             },
+            "nullable": true,
             "type": "array"
           }
         },
@@ -790,6 +826,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierDocumentRequirement"
             },
+            "nullable": true,
             "type": "array"
           },
           "name": {
@@ -799,6 +836,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierComparisonRule"
             },
+            "nullable": true,
             "type": "array"
           }
         },
@@ -820,6 +858,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierPinnedDocument"
             },
+            "nullable": true,
             "type": "array"
           },
           "version": {
@@ -881,6 +920,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierDocumentRequirement"
             },
+            "nullable": true,
             "type": "array"
           },
           "expected_version": {
@@ -894,6 +934,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierComparisonRule"
             },
+            "nullable": true,
             "type": "array"
           }
         },
@@ -937,6 +978,7 @@
               "format": "double",
               "type": "number"
             },
+            "nullable": true,
             "type": "array"
           },
           "company_id": {
@@ -1074,6 +1116,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierClassificationOverride"
             },
+            "nullable": true,
             "type": "array"
           },
           "company_id": {
@@ -1138,6 +1181,7 @@
               "format": "int64",
               "type": "integer"
             },
+            "nullable": true,
             "type": "array"
           },
           "status": {
@@ -1199,6 +1243,7 @@
               "format": "int64",
               "type": "integer"
             },
+            "nullable": true,
             "type": "array"
           },
           "role": {
@@ -1244,6 +1289,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierEvidence"
             },
+            "nullable": true,
             "type": "array"
           },
           "id": {
@@ -1292,10 +1338,12 @@
         "properties": {
           "expected_version": {
             "format": "int64",
+            "nullable": false,
             "type": "integer"
           },
           "reason": {
             "maxLength": 2000,
+            "nullable": false,
             "type": "string"
           }
         },
@@ -1382,10 +1430,12 @@
         "additionalProperties": false,
         "properties": {
           "document_type": {
+            "nullable": false,
             "type": "string"
           },
           "expected_version": {
             "format": "int64",
+            "nullable": false,
             "type": "integer"
           },
           "min_count": {
@@ -1394,6 +1444,7 @@
           },
           "reason": {
             "maxLength": 2000,
+            "nullable": false,
             "type": "string"
           },
           "role": {
@@ -1418,6 +1469,7 @@
             },
             "maxItems": 100,
             "minItems": 1,
+            "nullable": false,
             "type": "array"
           }
         },
@@ -1435,10 +1487,12 @@
               "REJECT",
               "REQUEST_CHANGES"
             ],
+            "nullable": false,
             "type": "string"
           },
           "expected_version": {
             "format": "int64",
+            "nullable": false,
             "type": "integer"
           },
           "reason": {
@@ -1474,6 +1528,7 @@
         "properties": {
           "description": {
             "maxLength": 4000,
+            "nullable": false,
             "type": "string"
           }
         },
@@ -1492,6 +1547,7 @@
             "items": {
               "$ref": "#/components/schemas/DossierUploadedFile"
             },
+            "nullable": true,
             "type": "array"
           }
         },
@@ -1525,6 +1581,7 @@
         "properties": {
           "expected_version": {
             "format": "int64",
+            "nullable": false,
             "type": "integer"
           }
         },
@@ -2699,6 +2756,7 @@
                                   "format": "int64",
                                   "type": "integer"
                                 },
+                                "nullable": true,
                                 "type": "object"
                               },
                               "date": {
@@ -2737,6 +2795,7 @@
                             "format": "int64",
                             "type": "integer"
                           },
+                          "nullable": true,
                           "type": "object"
                         }
                       },

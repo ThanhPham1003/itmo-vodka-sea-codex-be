@@ -34,7 +34,7 @@ func LoadConfig(path string) (*Config, error) {
 		"auth.request_limit":  20, "auth.rate_window": time.Minute,
 		"postgres.auto_migrate": false,
 		"uploads.directory":     "./storage/uploads", "uploads.max_file_size_mb": 20, "uploads.max_files_per_request": 10, "uploads.max_pdf_pages": 100,
-		"processing.enabled": false, "processing.provider": "anthropic", "processing.base_url": "https://api.anthropic.com", "processing.api_key": "", "processing.model": "",
+		"processing.enabled": false, "processing.provider": "openai-compatible", "processing.base_url": "https://api.openai.com", "processing.api_key": "", "processing.model": "",
 		"processing.poll_interval": 2 * time.Second, "processing.max_concurrent_files": 3, "processing.timeout": 90 * time.Second, "processing.lease_duration": 5 * time.Minute, "processing.max_page_dimension": 1600,
 	}
 	for key, value := range defaults {

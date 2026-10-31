@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -81,8 +82,9 @@ func fakeVision(t *testing.T) *httptest.Server {
 		if strings.Contains(prompt, "Classify the current") {
 			index := strings.Index(prompt, "Configuration: ")
 			var cfg struct {
-				Hint    string                  `json:"hint"`
-				Allowed []models.PinnedDocument `json:"allowed_document_types"`
+				Hint        string                  `json:"hint"`
+				CurrentPage int                     `json:"current_page"`
+				Allowed     []models.PinnedDocument `json:"allowed_document_types"`
 			}
 			if index < 0 || json.Unmarshal([]byte(prompt[index+len("Configuration: "):]), &cfg) != nil {
 				w.WriteHeader(400)
@@ -90,7 +92,7 @@ func fakeVision(t *testing.T) *httptest.Server {
 			}
 			typ := cfg.Hint
 			if typ == "" && len(cfg.Allowed) > 0 {
-				typ = cfg.Allowed[0].Code
+				typ = cfg.Allowed[(cfg.CurrentPage-1)%len(cfg.Allowed)].Code
 			}
 			answer = map[string]any{"document_type": typ, "role": "", "confidence": 0.99, "starts_new_document": true, "boundary_confidence": 1}
 		} else if strings.Contains(prompt, "Extract only visibly") {
@@ -107,6 +109,11 @@ func fakeVision(t *testing.T) *httptest.Server {
 			fields := []map[string]any{}
 			for _, field := range def.Fields {
 				fields = append(fields, map[string]any{"key": field.Key, "value": value, "raw_text": "visible evidence " + value, "confidence": 0.99, "page": 1, "bounding_box": []float64{0.1, 0.1, 0.8, 0.2}})
+			}
+			page := 1
+			_, _ = fmt.Sscanf(prompt, "Extract only visibly supported values from this single page (page %d).", &page)
+			for _, field := range fields {
+				field["page"] = page
 			}
 			answer = map[string]any{"fields": fields}
 		} else {
