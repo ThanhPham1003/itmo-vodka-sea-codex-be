@@ -27,6 +27,13 @@ type Image struct {
 type Client interface {
 	Complete(context.Context, string, []Image) (json.RawMessage, error)
 }
+
+// StructuredClient can constrain a single completion without changing other
+// callers (OCR, assistant, or other catalog suggestions).
+type StructuredClient interface {
+	Client
+	CompleteJSON(context.Context, string, []Image, json.RawMessage) (json.RawMessage, error)
+}
 type HTTPClient struct {
 	cfg             config.ProcessingConfig
 	http            *http.Client
@@ -56,6 +63,22 @@ func NewClient(cfg config.ProcessingConfig, options ...Option) *HTTPClient {
 	return c
 }
 func (c *HTTPClient) Complete(ctx context.Context, prompt string, images []Image) (json.RawMessage, error) {
+	return c.complete(ctx, prompt, images, nil)
+}
+
+func (c *HTTPClient) CompleteJSON(ctx context.Context, prompt string, images []Image, schema json.RawMessage) (json.RawMessage, error) {
+	if !json.Valid(schema) {
+		return nil, c.failure("invalid_output_schema", 0, 0, nil)
+	}
+	// Anthropic's existing message contract is kept; the schema is provided as
+	// guidance and the caller still validates its response locally.
+	if c.cfg.Provider == "anthropic" {
+		return c.Complete(ctx, prompt+"\nOutput JSON schema: "+string(schema), images)
+	}
+	return c.complete(ctx, prompt, images, schema)
+}
+
+func (c *HTTPClient) complete(ctx context.Context, prompt string, images []Image, schema json.RawMessage) (json.RawMessage, error) {
 	if c.cfg.APIKey == "" || c.cfg.Model == "" {
 		return nil, c.failure("missing_configuration", 0, 0, nil)
 	}
@@ -94,6 +117,12 @@ func (c *HTTPClient) Complete(ctx context.Context, prompt string, images []Image
 	} else {
 		body["max_completion_tokens"] = c.maxOutputTokens
 		body["response_format"] = map[string]string{"type": "json_object"}
+		if schema != nil {
+			body["response_format"] = map[string]any{
+				"type":        "json_schema",
+				"json_schema": map[string]any{"name": "configuration", "strict": true, "schema": schema},
+			}
+		}
 		body["store"] = false
 	}
 	payload, err := json.Marshal(body)

@@ -59,12 +59,15 @@ docker logs --since 10m <container-id> 2>&1 | grep 'catalog suggestion failed'
 
 - `operation`: `document_type`, `dossier_type` hoặc `comparison_rules`.
 - `stage`: `ai_request` (gọi/đọc kết quả provider), `decode` (JSON sai schema), `validation` (cấu hình không hợp lệ), `audit` (ghi audit thất bại).
+- `stage=decode` có thêm `decode_error` (ví dụ `unknown_field`, `type_mismatch`), `json_field` nếu tên trường thuộc schema hoặc các wrapper phổ biến, và `expected_type`/`actual_type` khi sai kiểu. Tên trường tùy ý có thể chứa dữ liệu cá nhân nên không được ghi ra log.
 - `reason`: ví dụ `timeout`, `network_error`, `provider_http_error`, `output_truncated`, `invalid_json_content`, `invalid_schema`, `invalid_definition`.
 - Lỗi AI client có thêm `provider`, `model`, `timeout_ms` đang áp dụng, `attempt` (số lần gọi), `upstream_status` (0 khi chưa có HTTP response), và `provider_error_code` nếu thuộc danh sách mã lỗi đã biết.
 
 Ví dụ `stage=ai_request`, `reason=provider_http_error`, `upstream_status=401` chỉ ra provider từ chối request; `stage=validation` chỉ ra kết quả AI bị kiểm tra cấu hình từ chối. Không kết luận timeout chỉ từ thời gian access log. Thiếu `PROCESSING_TIMEOUT` trong env thì giá trị lấy từ YAML, mặc định `90s` nếu YAML không khai báo.
 
 Log không ghi API key, prompt, nội dung phản hồi AI, URL provider hay raw error. HTTP response của API vẫn dùng thông báo lỗi chung.
+
+Gợi ý loại tài liệu dùng `response_format.type=json_schema` với `strict=true` cho provider OpenAI-compatible. Schema yêu cầu object gốc `name`, `description`, `fields`, `special_requirements`, boolean đúng kiểu và mã định danh rỗng. Prompt kèm ví dụ JSON đầy đủ. Anthropic nhận schema trong prompt theo message contract hiện có. Kết quả vẫn được decode nghiêm ngặt và kiểm tra nghiệp vụ tại backend. OCR, trợ lý và các loại gợi ý khác giữ định dạng gọi AI hiện tại.
 
 ## Thiết lập GitHub và Docker Hub
 
