@@ -47,3 +47,17 @@ func (l *CatalogLogic) logSuggestionFailure(ctx context.Context, operation, stag
 	// generated content, request URLs, credentials, or database values.
 	event.Str("reason", reason).Msg("catalog suggestion failed")
 }
+
+func (l *CatalogLogic) logCatalogValidationFailure(ctx context.Context, err error) {
+	var validation *catalogValidationError
+	if !errors.As(err, &validation) {
+		return
+	}
+	event := l.log.Warn().Str("request_id", common.RequestIDFromContext(ctx)).
+		Str("operation", "dossier_type").Str("stage", "validation").
+		Str("validation_error", validation.Rule).Str("json_field", validation.Field)
+	if validation.Index >= 0 {
+		event.Int("item_index", validation.Index)
+	}
+	event.Msg("catalog save rejected")
+}
