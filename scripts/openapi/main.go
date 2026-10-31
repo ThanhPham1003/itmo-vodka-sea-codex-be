@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	asd "sea-codex-server/internal/assistant/dto"
 	am "sea-codex-server/internal/audit/models"
 	ad "sea-codex-server/internal/auth/dto"
 	dd "sea-codex-server/internal/dossier/dto"
@@ -27,7 +28,7 @@ var schemas = obj{}
 func ref(name string) obj { return obj{"$ref": "#/components/schemas/" + name} }
 func typeName(t reflect.Type) string {
 	module := "Common"
-	for _, part := range []string{"auth", "audit", "dossier", "health"} {
+	for _, part := range []string{"auth", "audit", "dossier", "health", "assistant"} {
 		if strings.Contains(t.PkgPath(), "/"+part+"/") {
 			module = strings.ToUpper(part[:1]) + part[1:]
 			break
@@ -178,7 +179,7 @@ func add(method, path, id, summary, description, permission string, status int, 
 	params := []any{param("X-Request-ID", "header", "Optional request correlation ID", obj{"type": "string"})}
 	for _, match := range pathParams.FindAllStringSubmatch(path, -1) {
 		s := obj{"type": "string", "format": "uuid"}
-		if match[1] == "code" {
+		if match[1] == "code" || strings.HasPrefix(path, "/api/v1/assistant/") {
 			s = obj{"type": "string"}
 		}
 		params = append(params, param(match[1], "path", "Resource identifier in the authenticated tenant", s))
@@ -264,6 +265,25 @@ func main() {
 		auditParams = append(auditParams, query(name, "Exact filter; from/to are RFC3339 timestamps, to is exclusive"))
 	}
 	add("GET", "/audit-logs", "auditLogs", "List tenant audit events", "Append-only API; no update/delete endpoints. System actor_id is the zero UUID. Original values and private decision snapshots are excluded.", "audit:read", 200, nil, list(am.AuditLog{}), auditParams...)
+	add("GET", "/assistant/context", "assistantContext", "Get product-help context", "All active tenant members may read common guides. enabled only controls AI chat, not article access. Page hints are allowlisted names, never dossier data. No-store.", "authenticated", 200, nil, of(asd.ContextResponse{}), query("locale", "vi (default) or en"), query("page", "dashboard, dossiers, detail, review, members, catalog, audit, connection or empty"))
+	add("GET", "/assistant/articles/{id}", "assistantArticle", "Read a cited product guide", "Embedded versioned VI/EN product guidance. ID is an article slug, not a UUID. Does not return source code or tenant business data. No-store.", "authenticated", 200, nil, of(asd.ArticleResponse{}), query("locale", "vi (default) or en"))
+	add("POST", "/assistant/chat", "assistantChat", "Ask the product-help assistant", "OpenAI grounded guidance only; no dossier lookup or business mutations. Message max 2000 Unicode code points; history max 8 messages, 2000/message, 12000 total; body max 32 KiB. Roles only user/assistant. Company and permissions resolved server-side. Blocks cite retrieved IDs; server constructs sources. No chat content persisted. AI disabled/provider or audit failure returns 503. Quota is per company+actor, concurrency per instance. No-store.", "authenticated", 200, of(asd.ChatRequest{}), of(asd.ChatResponse{}))
+	chatResponses := paths["/api/v1/assistant/chat"].(obj)["post"].(obj)["responses"].(obj)
+	chatResponses["413"] = obj{"description": "Request body exceeds 32 KiB", "content": obj{"application/json": obj{"schema": ref("Error")}}}
+	chatResponses["429"] = obj{"description": "Actor quota or instance capacity exceeded", "headers": obj{"Retry-After": obj{"schema": obj{"type": "integer", "minimum": 1}}}, "content": obj{"application/json": obj{"schema": ref("Error")}}}
+	for name, fields := range map[string]map[string][]string{
+		"AssistantChatRequest": {"locale": {"vi", "en"}}, "AssistantMessage": {"role": {"user", "assistant"}},
+		"AssistantChatResponse": {"status": {"answered", "out_of_scope", "insufficient_information"}},
+		"AssistantPage":         {"name": {"", "dashboard", "dossiers", "detail", "review", "members", "catalog", "audit", "connection"}, "tab": {"", "overview", "documents", "issues", "history"}},
+	} {
+		definition := schemas[name].(obj)
+		if name == "AssistantMessage" || name == "AssistantPage" {
+			definition["additionalProperties"] = false
+		}
+		for field, values := range fields {
+			definition["properties"].(obj)[field].(obj)["enum"] = values
+		}
+	}
 	spec := obj{"openapi": "3.0.3", "info": obj{"title": "SEA Codex Backend API", "version": "1.0.0", "description": "Tenant-scoped dossier intake, AI processing and legal review. Bearer tokens are PASETO v4.public. All JSON replies use {code,message,data}; business errors use data:null. Mutation expected_version must match dossier.version from the latest detail, otherwise HTTP 409. Tenant is never selected by client input. Worker disabled by default; configure AI and enable it to process uploads."}, "servers": []any{obj{"url": "http://localhost:8080"}}, "paths": paths, "components": obj{"securitySchemes": obj{"PasetoBearer": obj{"type": "http", "scheme": "bearer", "bearerFormat": "PASETO v4.public"}}, "schemas": schemas}}
 	// Domain validation adds requirements beyond transport binding tags.
 	for name, fields := range map[string][]string{

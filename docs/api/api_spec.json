@@ -1,6 +1,216 @@
 {
   "components": {
     "schemas": {
+      "AssistantArticleResponse": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "knowledge_version": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AssistantBlock": {
+        "properties": {
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AssistantChatRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantMessage"
+            },
+            "maxItems": 8,
+            "nullable": true,
+            "type": "array"
+          },
+          "locale": {
+            "enum": [
+              "vi",
+              "en"
+            ],
+            "nullable": false,
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "nullable": false,
+            "type": "string"
+          },
+          "page": {
+            "$ref": "#/components/schemas/AssistantPage"
+          }
+        },
+        "required": [
+          "message",
+          "locale"
+        ],
+        "type": "object"
+      },
+      "AssistantChatResponse": {
+        "properties": {
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantBlock"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "knowledge_version": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantSource"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "answered",
+              "out_of_scope",
+              "insufficient_information"
+            ],
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "AssistantContextResponse": {
+        "properties": {
+          "articles": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantSource"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "knowledge_version": {
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "supported_locales": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "AssistantMessage": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "nullable": false,
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "type": "object"
+      },
+      "AssistantPage": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "enum": [
+              "",
+              "dashboard",
+              "dossiers",
+              "detail",
+              "review",
+              "members",
+              "catalog",
+              "audit",
+              "connection"
+            ],
+            "type": "string"
+          },
+          "tab": {
+            "enum": [
+              "",
+              "overview",
+              "documents",
+              "issues",
+              "history"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AssistantSource": {
+        "properties": {
+          "article_path": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "AuditAuditLog": {
         "properties": {
           "action": {
@@ -1634,6 +1844,437 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/api/v1/assistant/articles/{id}": {
+      "get": {
+        "description": "Embedded versioned VI/EN product guidance. ID is an article slug, not a UUID. Does not return source code or tenant business data. No-store.",
+        "operationId": "assistantArticle",
+        "parameters": [
+          {
+            "description": "Optional request correlation ID",
+            "in": "header",
+            "name": "X-Request-ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Resource identifier in the authenticated tenant",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "vi (default) or en",
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AssistantArticleResponse"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing, invalid or inactive credentials"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Resource absent or inaccessible"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Stale version or business conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Database, storage or AI unavailable"
+          }
+        },
+        "security": [
+          {
+            "PasetoBearer": []
+          }
+        ],
+        "summary": "Read a cited product guide",
+        "x-permission": "authenticated"
+      }
+    },
+    "/api/v1/assistant/chat": {
+      "post": {
+        "description": "OpenAI grounded guidance only; no dossier lookup or business mutations. Message max 2000 Unicode code points; history max 8 messages, 2000/message, 12000 total; body max 32 KiB. Roles only user/assistant. Company and permissions resolved server-side. Blocks cite retrieved IDs; server constructs sources. No chat content persisted. AI disabled/provider or audit failure returns 503. Quota is per company+actor, concurrency per instance. No-store.",
+        "operationId": "assistantChat",
+        "parameters": [
+          {
+            "description": "Optional request correlation ID",
+            "in": "header",
+            "name": "X-Request-ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AssistantChatResponse"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing, invalid or inactive credentials"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Resource absent or inaccessible"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Stale version or business conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Request body exceeds 32 KiB"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Actor quota or instance capacity exceeded",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Database, storage or AI unavailable"
+          }
+        },
+        "security": [
+          {
+            "PasetoBearer": []
+          }
+        ],
+        "summary": "Ask the product-help assistant",
+        "x-permission": "authenticated"
+      }
+    },
+    "/api/v1/assistant/context": {
+      "get": {
+        "description": "All active tenant members may read common guides. enabled only controls AI chat, not article access. Page hints are allowlisted names, never dossier data. No-store.",
+        "operationId": "assistantContext",
+        "parameters": [
+          {
+            "description": "Optional request correlation ID",
+            "in": "header",
+            "name": "X-Request-ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "vi (default) or en",
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "dashboard, dossiers, detail, review, members, catalog, audit, connection or empty",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AssistantContextResponse"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing, invalid or inactive credentials"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Resource absent or inaccessible"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Stale version or business conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Database, storage or AI unavailable"
+          }
+        },
+        "security": [
+          {
+            "PasetoBearer": []
+          }
+        ],
+        "summary": "Get product-help context",
+        "x-permission": "authenticated"
+      }
+    },
     "/api/v1/audit-logs": {
       "get": {
         "description": "Append-only API; no update/delete endpoints. System actor_id is the zero UUID. Original values and private decision snapshots are excluded.",

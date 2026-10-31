@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"sea-codex-server/internal/assistant"
 	"sea-codex-server/internal/audit"
 	"sea-codex-server/internal/auth"
 	"sea-codex-server/internal/common"
@@ -33,9 +34,13 @@ func NewRouter(app *common.App) (*gin.Engine, error) {
 	audit.RegisterServices(app)
 	auth.RegisterServices(app)
 	dossier.RegisterServices(app)
+	if err := assistant.RegisterServices(app); err != nil {
+		return nil, err
+	}
 	health.NewServer(app)
 	auth.NewServer(app)
 	audit.NewServer(app)
 	dossier.NewServer(app)
+	assistant.NewServer(app)
 	return router, nil
 }

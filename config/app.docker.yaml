@@ -49,3 +49,15 @@ processing:
   timeout: 90s
   lease_duration: 5m
   max_page_dimension: 1600
+
+# Independent of OCR. Guides remain available with AI disabled.
+assistant:
+  enabled: false
+  base_url: https://api.openai.com
+  api_key: ""
+  model: ""
+  timeout: 30s
+  max_output_tokens: 1500
+  request_limit: 10
+  rate_window: 1m
+  max_concurrent_requests: 4

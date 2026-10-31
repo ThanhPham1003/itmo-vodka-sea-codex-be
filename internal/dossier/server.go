@@ -15,7 +15,7 @@ import (
 func RegisterServices(app *common.App) {
 	r := repositories.NewDossierRepository(app.DB)
 	client := ai.NewClient(app.Config.Processing)
-	catalog := logic.NewCatalogLogic(r, app.AuditWriter, client)
+	catalog := logic.NewCatalogLogic(r, app.AuditWriter, client, app.Logger)
 	dossiers := logic.NewDossierLogic(r, app.AuditWriter, app.IdentityResolver, storage.NewLocal(app.Config.Uploads.Directory), catalog, client, app.Config, app.Logger)
 	services.RegisterCatalogService(catalog)
 	services.RegisterDossierService(dossiers)

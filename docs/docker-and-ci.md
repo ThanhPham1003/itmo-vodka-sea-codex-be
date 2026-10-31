@@ -48,6 +48,24 @@ curl -i http://127.0.0.1:8080/health
 
 `.env.docker` và `.env.keys` bị gitignore và không được đưa vào Docker build context. Env file được Docker đọc để truyền biến môi trường vào container; API vẫn không tự đọc `.env`. Muốn sử dụng YAML riêng, mount file chỉ đọc rồi truyền `--config=/đường/dẫn/config.yaml` sau tên image.
 
+## Kiểm tra 503 khi tạo gợi ý cấu hình
+
+Sau khi build/deploy image chứa thay đổi logging, các API suggestions ghi thêm event
+`catalog suggestion failed` với cùng `request_id` như access log:
+
+```bash
+docker logs --since 10m <container-id> 2>&1 | grep 'catalog suggestion failed'
+```
+
+- `operation`: `document_type`, `dossier_type` hoặc `comparison_rules`.
+- `stage`: `ai_request` (gọi/đọc kết quả provider), `decode` (JSON sai schema), `validation` (cấu hình không hợp lệ), `audit` (ghi audit thất bại).
+- `reason`: ví dụ `timeout`, `network_error`, `provider_http_error`, `output_truncated`, `invalid_json_content`, `invalid_schema`, `invalid_definition`.
+- Lỗi AI client có thêm `provider`, `model`, `timeout_ms` đang áp dụng, `attempt` (số lần gọi), `upstream_status` (0 khi chưa có HTTP response), và `provider_error_code` nếu thuộc danh sách mã lỗi đã biết.
+
+Ví dụ `stage=ai_request`, `reason=provider_http_error`, `upstream_status=401` chỉ ra provider từ chối request; `stage=validation` chỉ ra kết quả AI bị kiểm tra cấu hình từ chối. Không kết luận timeout chỉ từ thời gian access log. Thiếu `PROCESSING_TIMEOUT` trong env thì giá trị lấy từ YAML, mặc định `90s` nếu YAML không khai báo.
+
+Log không ghi API key, prompt, nội dung phản hồi AI, URL provider hay raw error. HTTP response của API vẫn dùng thông báo lỗi chung.
+
 ## Thiết lập GitHub và Docker Hub
 
 1. Tạo repository trên Docker Hub, mặc định tên `sea-codex-server` trong namespace của tài khoản đăng nhập.
@@ -101,3 +119,7 @@ Dockerfile đã tách việc tạo thư mục mode `0755` khỏi thiết lập f
 Đã build đầy đủ image sửa cho `linux/amd64` và chạy lại cả hai step trên Docker local: `--help` trả 0; UID `10001`, quyền đi vào thư mục config, đọc file config và ghi storage đều pass, step runtime trả 0. `make check` và actionlint cũng pass. Kiểm chứng container của bản sửa này thực hiện trên `amd64`; manifest đa kiến trúc và publish vẫn do CI thực hiện sau khi code được push.
 
 Tham khảo: [Docker GitHub Actions](https://docs.docker.com/build/ci/github-actions/), [multi-stage build](https://docs.docker.com/build/building/best-practices/), [official Go image tags](https://raw.githubusercontent.com/docker-library/official-images/master/library/golang).
+
+## Image có trợ lý hướng dẫn
+
+Knowledge của assistant nằm trong `internal/assistant/knowledge/articles/*.md`, được `go:embed` vào binary khi Docker build. Dockerfile/CI hiện tại đã copy toàn bộ `internal/`, vì vậy không cần service/vector DB/volume hay token AI trong CI. Tests dùng provider giả. Runtime mặc định AI tắt; cấu hình `ASSISTANT_ENABLED`, `ASSISTANT_API_KEY`, `ASSISTANT_MODEL` và các giới hạn theo [runbook](system-assistant-design.md). Không đưa key vào build args hoặc frontend. Overlay `config/compose.assistant.yaml` bổ sung env vào service `api` của Compose trên VM; không sửa/xóa database.

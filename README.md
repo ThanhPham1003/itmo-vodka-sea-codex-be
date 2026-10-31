@@ -15,6 +15,7 @@ internal/auth/          Company, user, signup/login, member/access management
 internal/dossier/       Catalog, intake, processing, rules, review, privacy, dashboard
 internal/audit/         Audit append-only API theo tenant
 internal/health/        Liveness
+internal/assistant/     Trợ lý hướng dẫn VI/EN, knowledge embedded, OpenAI và citations
 pkg/                    config, database, logger, token, utils, storage, ai, document
 scripts/openapi/        Sinh API contract từ DTO và danh sách route
 scripts/evaluation/     Synthetic PDF generator và script đánh giá
@@ -137,3 +138,7 @@ TEST_POSTGRES_DSN='postgres://test_user@127.0.0.1:5432/test_database?sslmode=dis
 Tài khoản test cần quyền tạo schema trong database test. Không dùng production DSN. Sau build/test pass, cập nhật contract bằng `go run ./scripts/openapi`; test route parity kiểm tra spec khớp router.
 
 Chưa triển khai frontend, ảnh preview làm mờ, bảng địa chỉ hành chính 2025 hoặc UI benchmark (P2). Không có webhook/export/API key cho hệ thống ngoài vì thiết kế loại khỏi phạm vi.
+
+## Trợ lý hướng dẫn DocSense
+
+Chatbot chỉ hướng dẫn sử dụng/giải thích quy trình, không đọc hay sửa hồ sơ thực tế. Có 18 bài VI/EN nhúng trong binary, trích nguồn, quota theo tenant/user và audit không lưu nội dung chat. Mặc định AI tắt nhưng thư viện hướng dẫn vẫn dùng được. Xem [thiết kế và cấu hình triển khai](docs/system-assistant-design.md), [bảo trì knowledge](docs/system-assistant-knowledge.md) và [nghiệm thu](docs/system-assistant-acceptance-cases.md). Cấu hình `ASSISTANT_*` độc lập với `PROCESSING_*`; key chỉ đặt ở BE. Với Compose VM có service `api`, dùng overlay `config/compose.assistant.yaml` sau khi publish image mới.
